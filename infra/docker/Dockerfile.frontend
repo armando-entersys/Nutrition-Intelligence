@@ -1,0 +1,35 @@
+# Simple React frontend dockerfile
+FROM node:18-alpine
+
+# Install system dependencies
+RUN apk add --no-cache git curl
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV GENERATE_SOURCEMAP=false
+ENV REACT_APP_API_URL=http://localhost:8001
+ENV NODE_OPTIONS=--max_old_space_size=4096
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install dependencies with force to handle conflicts
+RUN npm ci --only=production --legacy-peer-deps || npm install --legacy-peer-deps --force
+
+# Copy source code
+COPY . .
+
+# Create simple server script for compatibility
+RUN echo '#!/bin/sh\nnpm start' > start.sh && chmod +x start.sh
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
+
+# Start with npm directly
+CMD ["npm", "start"]

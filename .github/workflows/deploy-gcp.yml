@@ -1,0 +1,88 @@
+name: Deploy to Google Cloud
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  GAR_LOCATION: us-central1-docker.pkg.dev
+
+jobs:
+  deploy:
+    name: Deploy to Google Cloud Run
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Google Auth
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker
+      run: gcloud auth configure-docker $GAR_LOCATION
+
+    - name: Build Backend Image
+      run: |
+        docker build -f infra/docker/Dockerfile.backend \
+          -t $GAR_LOCATION/$PROJECT_ID/nutrition/backend:$GITHUB_SHA \
+          -t $GAR_LOCATION/$PROJECT_ID/nutrition/backend:latest \
+          ./backend
+
+    - name: Push Backend Image
+      run: |
+        docker push $GAR_LOCATION/$PROJECT_ID/nutrition/backend:$GITHUB_SHA
+        docker push $GAR_LOCATION/$PROJECT_ID/nutrition/backend:latest
+
+    - name: Build Frontend Image
+      run: |
+        docker build -f infra/docker/Dockerfile.frontend \
+          -t $GAR_LOCATION/$PROJECT_ID/nutrition/frontend:$GITHUB_SHA \
+          -t $GAR_LOCATION/$PROJECT_ID/nutrition/frontend:latest \
+          ./frontend
+
+    - name: Push Frontend Image
+      run: |
+        docker push $GAR_LOCATION/$PROJECT_ID/nutrition/frontend:$GITHUB_SHA
+        docker push $GAR_LOCATION/$PROJECT_ID/nutrition/frontend:latest
+
+    - name: Deploy Backend to Cloud Run
+      run: |
+        gcloud run deploy nutrition-backend \
+          --image $GAR_LOCATION/$PROJECT_ID/nutrition/backend:$GITHUB_SHA \
+          --platform managed \
+          --region $REGION \
+          --allow-unauthenticated \
+          --port 8000 \
+          --memory 1Gi \
+          --cpu 1 \
+          --set-env-vars DATABASE_URL=${{ secrets.DATABASE_URL }},REDIS_URL=${{ secrets.REDIS_URL }},SECRET_KEY=${{ secrets.SECRET_KEY }}
+
+    - name: Deploy Frontend to Cloud Run
+      run: |
+        gcloud run deploy nutrition-frontend \
+          --image $GAR_LOCATION/$PROJECT_ID/nutrition/frontend:$GITHUB_SHA \
+          --platform managed \
+          --region $REGION \
+          --allow-unauthenticated \
+          --port 3000 \
+          --set-env-vars REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
+
+    - name: Show Deployment URLs
+      run: |
+        echo "Backend URL: $(gcloud run services describe nutrition-backend --region=$REGION --format='value(status.url)')"
+        echo "Frontend URL: $(gcloud run services describe nutrition-frontend --region=$REGION --format='value(status.url)')"

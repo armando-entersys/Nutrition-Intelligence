@@ -1,0 +1,33 @@
+FROM node:14-alpine
+
+WORKDIR /app
+
+# System dependencies
+RUN apk add --no-cache curl bash
+
+# Environment
+ENV NODE_ENV=development
+ENV GENERATE_SOURCEMAP=false
+ENV REACT_APP_API_URL=http://localhost:8001
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV SKIP_PREFLIGHT_CHECK=true
+ENV WDS_SOCKET_HOST=0.0.0.0
+
+# Copy package.json
+COPY package*.json ./
+
+# Install with compatible versions
+RUN npm install --force --legacy-peer-deps
+
+# Copy source
+COPY . .
+
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Start command
+CMD ["sh", "-c", "HOST=0.0.0.0 PORT=3000 npm start"]

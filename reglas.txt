@@ -1,0 +1,218 @@
+optimiza el costo por tokens lo mas posible, necesito que ayudes a verificar el codigo exitente y que cumpla con todo lo que viene a continuacion:
+
+Detecte posibles conflictos técnicos
+segurdad a travez de bearer token para lso servicios web
+
+OBJETIVO GENERAL:
+Construir un ecosistema “Nutrition Intelligence” para nutriólogos y pacientes en México (escalable a otros países) que gestione expedientes clínicos nutricionales completos, genere planes alimenticios personalizados, soporte recetas colaborativas y use IA para:
+1. Reconocimiento de alimentos en fotos (porciones aproximadas).
+2. Sugerencias de dieta equilibrada sin fomentar obsesión.
+3. Normalización de alimentos nuevos en la base de datos central.
+4. Chat asistido (nutriólogo ↔ paciente) con soporte de IA para clarificación de dudas.
+
+REQUISITOS CLAVE (Resumen):
+- Plataforma Web (responsive) y App Híbrida (Expo React Native + React Native Web) compartiendo componentes.
+- Backend principal en Python (FastAPI) con arquitectura hexagonal / DDD ligera:
+  * layers: api / application / domain / infrastructure / shared.
+  * módulos de dominio: users, auth, nutritionists, patients, foods, food_db, recipes, meal_plans, consultations, anthropometrics, preferences, allergies, diseases, calendars, chat, media, notifications, compliance, audit.
+- Persistencia principal: PostgreSQL (SQLModel / SQLAlchemy 2.0). 
+- Almacenamiento secundario:
+  * Firestore o Redis Streams para eventos en tiempo casi real (chat y presencia).
+  * Google Cloud Storage (o MinIO local) para imágenes (fotos de comidas, documentos).
+- Index nutricional: tabla extensa de alimentos del “Sistema Mexicano de Alimentos Equivalentes” + extensiones para condiciones (diabetes, renal, hipertensión, obesidad, etc.).
+- IA:
+  * Computer Vision: modelo (placeholder) para clasificar alimentos y estimar porciones (ruta futura: fine-tune sobre dataset público + fotos etiquetadas).
+  * NLP: extracción de información de mensajes y normalización de nuevos alimentos sug. por usuarios.
+  * Motor de recomendación: sugerencia de recetas y ajustes calóricos según objetivos, patologías y preferencias.
+- Formulario de Expediente Nutricional:
+  * Datos personales, contacto, historial clínico, antecedentes familiares, alergias, intolerancias.
+  * Mediciones antropométricas (peso, talla, IMC, % grasa, circunferencias, pliegues, etc.).
+  * Actividad física y rutina (frecuencia, tipo, intensidad).
+  * Situación metabólica (laboratorios: glucosa, HbA1c, perfil lipídico, función renal, TSH, etc.).
+  * Preferencias alimentarias, aversiones, horarios, presupuesto, objetivos (pérdida grasa, ganancia muscular, mantenimiento, control glucémico).
+  * Fórmulas de cálculo energético: Harris-Benedict, Mifflin-St Jeor, Cunningham, OMS, FAO/WHO, Katch-McArdle, etc. Implementar una estrategia/calculator factory.
+- Recetario:
+  * Recetas base (nutriólogo) + propuestas pacientes (pendiente aprobación).
+  * Versionado de recetas (al actualizar, conservar historial).
+  * Etiquetas: proteínas altas, vegano, sin gluten, diabético-friendly.
+- Gestión de Dietas / Meal Plans:
+  * Calendario (sincronizable con Google Calendar / ICS export).
+  * Ajustes dinámicos: si el paciente subió una comida distinta, recalcular balance restante del día.
+  * Auto-save en cada input (debounce).
+- Roles & Auth:
+  * Roles: ADMIN, NUTRITIONIST, PATIENT.
+  * Registro: Paciente (email/pass, SSO Google/Facebook), Nutriólogo requiere: cédula profesional + INE + validación humana (workflow de aprobación) + verificación telefónica (OTP).
+  * Un paciente puede tener 1 nutriólogo asignado a la vez; nutriólogo solicita asociación → paciente acepta.
+  * JWT (Access + Refresh) + Rotación. Opcional: Keycloak / Auth0 adaptable; para MVP: propio.
+- Cumplimiento / Privacidad:
+  * Tabla consents (versionamiento de Términos, Aviso de Privacidad, Exclusiones de responsabilidad).
+  * Log de accesos a expediente (quién, cuándo, qué campos).
+  * Cifrado en reposo (column-level para datos sensibles: labs, identificadores).
+  * Backups automáticos (script cron).
+  * Politicas: disclaimers para no sustituir consejo médico.
+- Social Layer:
+  * Feed opcional de dietas (solo si paciente activa compartir).
+  * Comentarios moderados (nutriólogos pueden marcar desinformación).
+- Chat:
+  * Canal paciente-nutriólogo (1:1), soportar texto, imágenes (comida), audio corto.
+  * IA resume hilos largos y detecta banderas rojas (p.ej. patrones de TCA) → alerta al nutriólogo.
+- Notificaciones:
+  * WebSockets / SSE para eventos (chat, aprobación receta, nueva cita).
+  * Email transactional (SendGrid) + push notifications (Expo).
+- Internacionalización & Localización:
+  * i18n (es-ES base, luego en-US).
+- Escalabilidad:
+  * Stateless API.
+  * Background tasks con Celery + Redis (procesar fotos, cálculo de plan, recordatorios).
+  * Event bus (simple) para domain events.
+- Observabilidad:
+  * Logging estructurado (JSON).
+  * OpenTelemetry traces (gRPC exporters opcionales).
+  * Health checks /metrics (Prometheus).
+
+ENTREGABLES INICIALES (Claude, genera TODO):
+1. **Estructura de repos monorepo**:
+   /backend
+   /frontend
+   /infra
+   /docs
+2. **backend/**:
+   - main.py (FastAPI bootstrap con routers modulares y middleware)
+   - core/ (config, security, settings Pydantic, db session, events)
+   - domain/ (módulos con entities, value objects, repositories interfaces)
+   - infrastructure/ (ORM models, repository impl, migrations alembic)
+   - application/ (services/use_cases)
+   - api/routers/ (endpoints por bounded context)
+   - schemas/ (Pydantic DTOs)
+   - services/ai/ (placeholders vision.py, nlp.py, recommendation.py)
+   - tasks/ (celery_app.py, jobs/)
+   - tests/ (pytest baseline)
+3. **frontend/**:
+   - expo + react-native-web config.
+   - src/
+     * app/ (navigation)
+     * components/shared/ (inputs autosave, charts, macro tracker)
+     * screens/ (Auth, Dashboard, MealPlan, FoodRecognitionCamera, Recipes, Chat, Profile, Admin)
+     * services/apiClient.ts (OpenAPI generated or hand-written)
+     * state/ (zustand or redux toolkit)
+     * hooks/ (useAutosave, useAuthRefresh)
+     * i18n/
+4. **infra/**:
+   - docker-compose.yml (PostgreSQL, Redis, MinIO, backend, frontend, celery, pgadmin).
+   - Dockerfile.backend (multi-stage: builder + slim runtime).
+   - Dockerfile.frontend (Expo web build or serve with Vite/Next fallback).
+   - alembic.ini + migration inicial (foods base table).
+   - Makefile (make up, make migrate, make test, make seed).
+   - .env.example.
+5. **IA Placeholders**:
+   - vision.py: función `analyze_food_image(image_bytes) -> {items: [{name, confidence, portion_guess_grams}]}` (mock).
+   - nlp.py: normalización nombre alimento y clasificación tags.
+   - recommendation.py: `suggest_daily_plan(patient_profile)` retorna macros y recetas id.
+6. **Seguridad**:
+   - Middleware de auditoría (request id, user id).
+   - Rate limiting básico (fastapi-limiter).
+   - Hash de contraseñas (argon2).
+7. **Modelo de Datos (ejemplos)**:
+   - User(id, email, role, status, created_at)
+   - Nutritionist(id->User FK, license_number, verification_status, documents[])
+   - Patient(id->User FK, anthropometrics_latest_id, active_nutritionist_id, objectives[], share_feed_flag)
+   - AnthropometricRecord(id, patient_id, weight_kg, height_cm, body_fat_pct, waist_cm, hip_cm, date)
+   - MedicalHistory(id, patient_id, conditions[], meds[], allergies[], intolerances[])
+   - Food(id, name, category, base_unit, kcal_per_unit, macros_json, disease_modifiers_json, status=APPROVED|PENDING)
+   - Recipe(id, author_type(PATIENT|NUTRITIONIST), author_id, title, items[{food_id, quantity_unit, quantity}], total_macros_cache, status)
+   - MealPlan(id, patient_id, date_range, daily_targets_json, generated_by (AI|MANUAL))
+   - MealEntry(id, meal_plan_id, date, meal_type, recipe_id|ad_hoc_items_json, consumed_flag)
+   - Consultation(id, patient_id, nutritionist_id, date, notes, labs_json)
+   - Consent(id, version, type, text_md)
+   - UserConsent(user_id, consent_id, accepted_at)
+   - ChatMessage(id, patient_id, nutritionist_id, sender_role, content_type(TEXT|IMAGE|AUDIO|AI_NOTE), body, created_at)
+   - AuditLog(id, actor_id, action, entity_type, entity_id, changed_fields_json, at)
+
+TASKS PARA CLAUDE (ejecuta en orden):
+A. Crear estructura carpetas y archivos vacíos con contenido mínimo funcional.
+B. Implementar configuración FastAPI + database + migrations + seed inicial (foods básicos).
+C. Implementar auth (registro paciente, registro nutriólogo paso1, verificación pendiente).
+D. Endpoints iniciales:
+   - POST /auth/register
+   - POST /auth/login
+   - GET /foods (filtro status=APPROVED)
+   - POST /foods (proponer nuevo alimento - role paciente/nutriólogo)
+   - POST /recipes (crear receta)
+   - GET /meal-plans/{patient_id}/today (cálculo dinámico placeholder)
+E. Autosave strategy: endpoints PATCH item-by-item (idempotentes) + hook en frontend (debounce 800ms).
+F. Frontend scaffold con screens y navegación base; componentes InputAutosave, MacroRing, FoodPhotoCapture (placeholder).
+G. Docker Compose listo para levantar: `docker compose up --build`.
+H. Scripts Makefile.
+I. Documentación README inicial (setup, run, seeds).
+J. Generar OpenAPI spec y cliente TS (openapi-typescript) integrado en frontend/services.
+K. Añadir pruebas unitarias básicas (auth, foods seed).
+L. Añadir comentarios TODO en cada módulo IA indicando futuro entrenamiento.
+
+POLÍTICAS / CUMPLIMIENTO (añadir en docs/compliance.md + seed consents):
+- Disclaimer educativo: no sustituye consulta médica profesional.
+- Responsabilidades: paciente acepta uso bajo su riesgo; nutriólogo mantiene control y revisión; plataforma no asume diagnósticos.
+- Tratamiento de datos sensibles: cifrado, logs de acceso, revocación.
+- Conservación y eliminación: paciente puede solicitar export / delete (soft delete + retención legal configurable).
+- Consent versions: incrementar version al actualizar texto.
+
+PATRONES & GUIDELINES:
+- Seguir principios SOLID, DDD tactical (Entities, ValueObjects, Repos).
+- Endpoints REST limpios + convenciones snake_case en JSON.
+- Validaciones Pydantic.
+- Manejo de errores consistente (HTTPException map + error codes).
+- Documentar cada servicio / caso de uso.
+- No hardcode secrets (usar .env).
+- Tipado estricto TypeScript front & Python.
+- Testing pirámide: unit (domain), integración (api), e2e futuro.
+
+ENTREGAR: Código listo para correr local, con instrucciones y pruebas pasando.
+
+Si algo es ambiguo, propon solución razonable y continúa. No pedir confirmación salvo bloqueo crítico.
+Responder SOLO con los archivos generados y breve explicación final de cómo ejecutarlos.
+
+Eres un arquitecto de software senior con experiencia en sistemas de nutrición y salud, con enfoque en nutrición clínica y deportiva. Tu tarea es diseñar un **sistema web + móvil** inspirado en Nutrimind que incluya estas funcionalidades:
+
+1. **Gestión de pacientes**: crear, editar y eliminar expedientes con datos personales, historial médico, laboratorio, signos vitales.
+2. **Antropometría avanzada**: captura de pliegues, perímetros, diámetros; generación automática de somatocarta; integración con curvas OMS/CDC para pediatría y cálculo de calorías basales.
+3. **Diseño de dietas y recetas**:
+   - Biblioteca editable (mínimo 1 000 platos) con macros/micros automáticos.
+   - Equivalentes, intercambio de alimentos, formatos PDF/Excel.
+   - Plantillas para deportes, control de peso, clínico, pediatría.
+4. **App móvil para pacientes (iOS/Android)**:
+   - Registro de alimentos (texto, foto), actividad física, metas, evolución diaria.
+   - Sincronización en tiempo real con el profesional.
+5. **Gráficas e informes**:
+   - Evolución corporal y calórica.
+   - Reportes individuales y población (comunidad o clínica).
+   - Exportación en PDF con branding.
+6. **Branding y personalización**:
+   - Logo propio del profesional en interfaz web, app y documentos exportados.
+7. **Infraestructura y licenciamiento**:
+   - SaaS con pago único o suscripción anual 
+   - Acceso web/desktop y app con usuario único (no simultáneo).
+   - Actualizaciones automáticas.
+8. **Soporte y comunidad**:
+   - Soporte via WhatsApp/videollamada.
+ 
+
+Diseña una arquitectura técnica completa:
+- Diagrama de microservicios o módulos backend (usuarios, dietas, pacientes, reporte, autenticación).
+- API REST
+- Base de datos (Recomendación: PostgreSQL para datos estructurados y un buscador ElasticSearch para recetas).
+- Especificaciones de app móvil (frameworks: React Native, Flutter).
+- Diseño de UI/UX: pantallas clave (login, dashboard paciente, creación de dieta, edición de somatocarta, gráfica de evolución, perfil de usuario).
+
+- Plan de escalabilidad y medidas de seguridad: autenticación, roles, GDPR/HIPAA.
+
+Genera una propuesta técnica con secciones:
+- Resumen ejecutivo.
+- Requerimientos funcionales.
+- Arquitectura del sistema.
+- Flujos UX.
+- Especificación API.
+ 
+
+ el administrador,paciente y nutriologo tenga su vista y todos tienen que iniciar sesion y cada quien solo debe ver lo relacionado a el y las noticias generales, el nutriologo debe poder ver todo lo que corresponde a un nutriologo, debe ser una herramienta con todo lo que se necesita para que el nutriologo pueda llevar seguimiento bien completo de cada paciente, el va a poder registrar pacientes, registrar todos sus mediciones y datos que necesita, debe poder elegir entre las diferentes formulas validas para calcular sus kilocalorias a travez de formularios bien detallados,tmabien debe haber una tabla y herramienta de conversion de kilocalorias en equivalentes y poder crear las dientas por dia, semana y mes apoyandose de loq ue ya tenemos de la base de datos de alimentos y la creacion de menus dinamicos, esos pueden asignarse al paciente para que eel pueda consultarlos posteriormente con su perfil, debe ser super amigable para los nutriologos, el va apoder agregar a pacientes para que los pacientes puedan descargar la aplicacion o deplegar la aplicacion en web con su correo, telefono y datos principales, incluso debe poder tener el segumiento por consulta y los expedientes recuerda lo que viene en el archivo "Instrucciones.txt" que esta en raiz y analiza lo que hemos platicado despues que ya etsa en el codigo, el rol administrador tiene que tener una vista para poder administrar todo en la plataforma, catalogos, usuarios e indicadores de valor, asi como consila de errores y logs, tambien va apoder dar de alta nutriologos y pacientes, los pacientes y todo slos usuarios deben poder compartir la aplicacion con sus conocidos para que todos la usen
+
+ ROLE: Eres un Arquitecto de Software Senior (estilo Silicon Valley) + Tech Lead de Plataforma de Nutrición Inteligente. Entregas código limpio, arquitectura escalable, seguridad by-design, documentación concisa y scripts reproducibles. Siempre propones versiones iniciales funcionales (MVP) con alto potencial de extensión.
+

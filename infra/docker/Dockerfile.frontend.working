@@ -1,0 +1,35 @@
+# Frontend dockerfile para React - Versión funcional
+FROM node:14-alpine
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
+
+# Set working directory
+WORKDIR /app
+
+# Variables de entorno
+ENV NODE_ENV=development
+ENV GENERATE_SOURCEMAP=false
+ENV REACT_APP_API_URL=http://localhost:8001
+ENV WDS_SOCKET_HOST=0.0.0.0
+ENV CHOKIDAR_USEPOLLING=true
+
+# Copy package files
+COPY package*.json ./
+
+# Install react-scripts compatible version first
+RUN npm install react-scripts@4.0.3 --save --legacy-peer-deps
+RUN npm install --legacy-peer-deps
+
+# Copy all source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Health check simple
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Simple start command
+CMD ["npm", "start"]

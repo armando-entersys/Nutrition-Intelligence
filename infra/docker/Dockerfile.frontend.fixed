@@ -1,0 +1,40 @@
+# Fixed React frontend dockerfile
+FROM node:18-alpine
+
+# Install system dependencies
+RUN apk add --no-cache git python3 make g++ curl
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S reactjs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV GENERATE_SOURCEMAP=false
+ENV REACT_APP_API_URL=http://localhost:8001
+
+# Copy package files
+COPY package*.json ./
+
+# Clear npm cache and install dependencies
+RUN npm cache clean --force && \
+    npm install --legacy-peer-deps --verbose
+
+# Copy source code
+COPY . .
+
+# Change ownership to nodejs user
+RUN chown -R reactjs:nodejs /app
+USER reactjs
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
+
+# Start the development server
+CMD ["npm", "start"]
