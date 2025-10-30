@@ -1,73 +1,84 @@
 import React from 'react';
+import { Breadcrumbs as MuiBreadcrumbs, Link, Typography, Box } from '@mui/material';
+import { NavigateNext as NavigateNextIcon, Home as HomeIcon } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+
+const MotionBox = motion(Box);
 
 const Breadcrumbs = ({ items }) => {
   return (
-    <nav style={styles.container}>
-      <ol style={styles.breadcrumbList}>
-        {items.map((item, index) => (
-          <li key={index} style={styles.breadcrumbItem}>
-            {index > 0 && <span style={styles.separator}>›</span>}
-            {item.onClick ? (
-              <button onClick={item.onClick} style={styles.link}>
-                {item.label}
-              </button>
-            ) : (
-              <span style={index === items.length - 1 ? styles.current : styles.label}>
-                {item.label}
-              </span>
-            )}
-          </li>
-        ))}
-      </ol>
-    </nav>
-  );
-};
+    <MotionBox
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      sx={{ py: 1 }}
+    >
+      <MuiBreadcrumbs
+        separator={<NavigateNextIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
+        aria-label="breadcrumb"
+        sx={{
+          '& .MuiBreadcrumbs-separator': {
+            mx: 0.5,
+          },
+        }}
+      >
+        {items.map((item, index) => {
+          const isLast = index === items.length - 1;
+          const isFirst = index === 0;
 
-const styles = {
-  container: {
-    padding: '12px 20px',
-    backgroundColor: '#f8f9fa',
-    borderBottom: '1px solid #e9ecef',
-  },
-  breadcrumbList: {
-    display: 'flex',
-    alignItems: 'center',
-    listStyle: 'none',
-    margin: 0,
-    padding: 0,
-    gap: '8px',
-  },
-  breadcrumbItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  separator: {
-    color: '#95a5a6',
-    fontSize: '16px',
-    userSelect: 'none',
-  },
-  link: {
-    background: 'none',
-    border: 'none',
-    color: '#3498db',
-    cursor: 'pointer',
-    fontSize: '14px',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    transition: 'background-color 0.2s',
-    fontWeight: '500',
-  },
-  label: {
-    color: '#7f8c8d',
-    fontSize: '14px',
-    fontWeight: '500',
-  },
-  current: {
-    color: '#2c3e50',
-    fontSize: '14px',
-    fontWeight: '600',
-  },
+          if (item.onClick && !isLast) {
+            return (
+              <Link
+                key={index}
+                component="button"
+                onClick={item.onClick}
+                underline="hover"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  color: 'primary.main',
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: 'none',
+                  padding: '4px 8px',
+                  borderRadius: 1,
+                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  '&:hover': {
+                    bgcolor: 'primary.light',
+                    color: 'primary.dark',
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+              >
+                {isFirst && <HomeIcon fontSize="small" />}
+                {item.label}
+              </Link>
+            );
+          }
+
+          return (
+            <Typography
+              key={index}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                color: isLast ? 'text.primary' : 'text.secondary',
+                fontWeight: isLast ? 600 : 500,
+                fontSize: '0.875rem',
+              }}
+            >
+              {isFirst && <HomeIcon fontSize="small" />}
+              {item.label}
+            </Typography>
+          );
+        })}
+      </MuiBreadcrumbs>
+    </MotionBox>
+  );
 };
 
 export default Breadcrumbs;

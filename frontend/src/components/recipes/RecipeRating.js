@@ -111,7 +111,7 @@ const RecipeRating = ({ recipeId, currentUser, onRatingUpdate }) => {
   };
 
   const deleteRating = async (ratingId) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar tu calificación?')) {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar tu calificación?')) {
       return;
     }
 
