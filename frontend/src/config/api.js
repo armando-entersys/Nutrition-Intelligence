@@ -1,6 +1,6 @@
 // API Configuration
 // Force the correct URL since environment variables might not be loading properly
-export const API_BASE_URL = 'http://localhost:8001';
+export const API_BASE_URL = 'http://localhost:8000';
 
 export const API_ENDPOINTS = {
   HEALTH: `${API_BASE_URL}/health`,
