@@ -1,35 +1,650 @@
 """
-Patient endpoints
+Patient endpoints - Expediente Clínico Digital CRUD
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
+from datetime import date, datetime
+
 from core.database import get_async_session
 from core.security import get_current_user_id
-from domain.patients.models import Patient
+from domain.patients.models import (
+    Patient,
+    AnthropometricRecord,
+    MedicalHistory,
+    Gender,
+    ActivityLevel
+)
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 
-@router.get("/me")
+# ============================================================================
+# SCHEMAS / DTOs
+# ============================================================================
+
+class PatientCreate(BaseModel):
+    """Create patient profile"""
+    date_of_birth: date
+    gender: Gender
+    primary_goal: str = Field(max_length=500)
+    target_weight_kg: Optional[float] = None
+    target_body_fat_pct: Optional[float] = None
+    activity_level: ActivityLevel = ActivityLevel.SEDENTARY
+    occupation: Optional[str] = None
+    share_feed: bool = False
+    allow_data_research: bool = False
+
+
+class PatientUpdate(BaseModel):
+    """Update patient profile"""
+    date_of_birth: Optional[date] = None
+    gender: Optional[Gender] = None
+    primary_goal: Optional[str] = None
+    target_weight_kg: Optional[float] = None
+    target_body_fat_pct: Optional[float] = None
+    activity_level: Optional[ActivityLevel] = None
+    occupation: Optional[str] = None
+    share_feed: Optional[bool] = None
+    allow_data_research: Optional[bool] = None
+    active_nutritionist_id: Optional[int] = None
+
+
+class AnthropometricRecordCreate(BaseModel):
+    """Create anthropometric record"""
+    weight_kg: float
+    height_cm: Optional[float] = None
+    body_fat_pct: Optional[float] = None
+    muscle_mass_kg: Optional[float] = None
+    bone_mass_kg: Optional[float] = None
+    water_pct: Optional[float] = None
+    waist_cm: Optional[float] = None
+    hip_cm: Optional[float] = None
+    chest_cm: Optional[float] = None
+    arm_cm: Optional[float] = None
+    thigh_cm: Optional[float] = None
+    triceps_mm: Optional[float] = None
+    biceps_mm: Optional[float] = None
+    subscapular_mm: Optional[float] = None
+    suprailiac_mm: Optional[float] = None
+    measurement_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class AnthropometricRecordUpdate(BaseModel):
+    """Update anthropometric record"""
+    weight_kg: Optional[float] = None
+    height_cm: Optional[float] = None
+    body_fat_pct: Optional[float] = None
+    muscle_mass_kg: Optional[float] = None
+    bone_mass_kg: Optional[float] = None
+    water_pct: Optional[float] = None
+    waist_cm: Optional[float] = None
+    hip_cm: Optional[float] = None
+    chest_cm: Optional[float] = None
+    arm_cm: Optional[float] = None
+    thigh_cm: Optional[float] = None
+    triceps_mm: Optional[float] = None
+    biceps_mm: Optional[float] = None
+    subscapular_mm: Optional[float] = None
+    suprailiac_mm: Optional[float] = None
+    measurement_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class MedicalHistoryCreate(BaseModel):
+    """Create or update medical history"""
+    conditions: Optional[List[str]] = None
+    allergies: Optional[List[str]] = None
+    intolerances: Optional[List[str]] = None
+    medications: Optional[List[str]] = None
+    family_history: Optional[dict] = None
+    lab_results: Optional[dict] = None
+    lab_date: Optional[date] = None
+    eating_preferences: Optional[List[str]] = None
+    food_aversions: Optional[List[str]] = None
+    dietary_restrictions: Optional[List[str]] = None
+    smoking: bool = False
+    alcohol_consumption: str = "none"
+    sleep_hours: Optional[float] = None
+    stress_level: Optional[int] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    emergency_contact_relationship: Optional[str] = None
+
+
+class MedicalHistoryUpdate(BaseModel):
+    """Update medical history"""
+    conditions: Optional[List[str]] = None
+    allergies: Optional[List[str]] = None
+    intolerances: Optional[List[str]] = None
+    medications: Optional[List[str]] = None
+    family_history: Optional[dict] = None
+    lab_results: Optional[dict] = None
+    lab_date: Optional[date] = None
+    eating_preferences: Optional[List[str]] = None
+    food_aversions: Optional[List[str]] = None
+    dietary_restrictions: Optional[List[str]] = None
+    smoking: Optional[bool] = None
+    alcohol_consumption: Optional[str] = None
+    sleep_hours: Optional[float] = None
+    stress_level: Optional[int] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    emergency_contact_relationship: Optional[str] = None
+
+
+# ============================================================================
+# PATIENT ENDPOINTS - Datos Generales
+# ============================================================================
+
+@router.get("/me", response_model=Patient)
 async def get_my_patient_profile(
     current_user_id: int = Depends(get_current_user_id),
-    session: Session = Depends(get_async_session)
+    session: AsyncSession = Depends(get_async_session)
 ):
     """Get current patient profile"""
     query = select(Patient).where(Patient.user_id == current_user_id)
     result = await session.exec(query)
     patient = result.first()
-    
+
     if not patient:
-        raise HTTPException(status_code=404, detail="Patient profile not found")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
     return patient
 
-@router.post("/me")
+
+@router.post("/me", response_model=Patient, status_code=status.HTTP_201_CREATED)
 async def create_patient_profile(
-    profile_data: dict,
+    profile_data: PatientCreate,
     current_user_id: int = Depends(get_current_user_id),
-    session: Session = Depends(get_async_session)
+    session: AsyncSession = Depends(get_async_session)
 ):
     """Create patient profile"""
-    # TODO: Implement patient profile creation
-    return {"message": "Patient profile creation not implemented yet"}
+    # Check if profile already exists
+    query = select(Patient).where(Patient.user_id == current_user_id)
+    result = await session.exec(query)
+    existing = result.first()
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Patient profile already exists"
+        )
+
+    # Create new patient
+    patient = Patient(
+        user_id=current_user_id,
+        **profile_data.model_dump()
+    )
+
+    session.add(patient)
+    await session.commit()
+    await session.refresh(patient)
+
+    return patient
+
+
+@router.put("/me", response_model=Patient)
+async def update_patient_profile(
+    profile_data: PatientUpdate,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Update patient profile"""
+    query = select(Patient).where(Patient.user_id == current_user_id)
+    result = await session.exec(query)
+    patient = result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Update fields
+    update_data = profile_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(patient, field, value)
+
+    patient.updated_at = datetime.utcnow()
+
+    await session.commit()
+    await session.refresh(patient)
+
+    return patient
+
+
+@router.get("/{patient_id}", response_model=Patient)
+async def get_patient_by_id(
+    patient_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get patient by ID (for nutritionists)"""
+    # TODO: Add authorization check - only assigned nutritionist can access
+    query = select(Patient).where(Patient.id == patient_id)
+    result = await session.exec(query)
+    patient = result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    return patient
+
+
+# ============================================================================
+# ANTHROPOMETRIC RECORDS - Mediciones Antropométricas
+# ============================================================================
+
+@router.get("/me/anthropometrics", response_model=List[AnthropometricRecord])
+async def get_my_anthropometric_records(
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session),
+    limit: int = Query(default=10, le=100),
+    offset: int = Query(default=0, ge=0)
+):
+    """Get anthropometric records for current patient"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Get records
+    query = (
+        select(AnthropometricRecord)
+        .where(AnthropometricRecord.patient_id == patient.id)
+        .order_by(AnthropometricRecord.measurement_date.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await session.exec(query)
+    records = result.all()
+
+    return records
+
+
+@router.post("/me/anthropometrics", response_model=AnthropometricRecord, status_code=status.HTTP_201_CREATED)
+async def create_anthropometric_record(
+    record_data: AnthropometricRecordCreate,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Create new anthropometric record"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Calculate BMI if height and weight are provided
+    bmi = None
+    if record_data.height_cm and record_data.weight_kg:
+        height_m = record_data.height_cm / 100
+        bmi = record_data.weight_kg / (height_m ** 2)
+
+    # Calculate waist-hip ratio if both are provided
+    waist_hip_ratio = None
+    if record_data.waist_cm and record_data.hip_cm:
+        waist_hip_ratio = record_data.waist_cm / record_data.hip_cm
+
+    # Create record
+    record = AnthropometricRecord(
+        patient_id=patient.id,
+        measured_by_id=current_user_id,
+        bmi=bmi,
+        waist_hip_ratio=waist_hip_ratio,
+        measurement_date=record_data.measurement_date or date.today(),
+        **record_data.model_dump(exclude={'measurement_date'})
+    )
+
+    session.add(record)
+    await session.commit()
+    await session.refresh(record)
+
+    return record
+
+
+@router.get("/me/anthropometrics/{record_id}", response_model=AnthropometricRecord)
+async def get_anthropometric_record(
+    record_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get specific anthropometric record"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Get record
+    query = select(AnthropometricRecord).where(
+        AnthropometricRecord.id == record_id,
+        AnthropometricRecord.patient_id == patient.id
+    )
+    result = await session.exec(query)
+    record = result.first()
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Record not found"
+        )
+
+    return record
+
+
+@router.put("/me/anthropometrics/{record_id}", response_model=AnthropometricRecord)
+async def update_anthropometric_record(
+    record_id: int,
+    record_data: AnthropometricRecordUpdate,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Update anthropometric record"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Get record
+    query = select(AnthropometricRecord).where(
+        AnthropometricRecord.id == record_id,
+        AnthropometricRecord.patient_id == patient.id
+    )
+    result = await session.exec(query)
+    record = result.first()
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Record not found"
+        )
+
+    # Update fields
+    update_data = record_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(record, field, value)
+
+    # Recalculate BMI if needed
+    if record.height_cm and record.weight_kg:
+        height_m = record.height_cm / 100
+        record.bmi = record.weight_kg / (height_m ** 2)
+
+    # Recalculate waist-hip ratio if needed
+    if record.waist_cm and record.hip_cm:
+        record.waist_hip_ratio = record.waist_cm / record.hip_cm
+
+    await session.commit()
+    await session.refresh(record)
+
+    return record
+
+
+@router.delete("/me/anthropometrics/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_anthropometric_record(
+    record_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Delete anthropometric record"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Get record
+    query = select(AnthropometricRecord).where(
+        AnthropometricRecord.id == record_id,
+        AnthropometricRecord.patient_id == patient.id
+    )
+    result = await session.exec(query)
+    record = result.first()
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Record not found"
+        )
+
+    await session.delete(record)
+    await session.commit()
+
+    return None
+
+
+# ============================================================================
+# MEDICAL HISTORY - Historia Clínica
+# ============================================================================
+
+@router.get("/me/medical-history", response_model=MedicalHistory)
+async def get_my_medical_history(
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get medical history for current patient"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Get medical history
+    query = select(MedicalHistory).where(MedicalHistory.patient_id == patient.id)
+    result = await session.exec(query)
+    history = result.first()
+
+    if not history:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Medical history not found"
+        )
+
+    return history
+
+
+@router.post("/me/medical-history", response_model=MedicalHistory, status_code=status.HTTP_201_CREATED)
+async def create_medical_history(
+    history_data: MedicalHistoryCreate,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Create medical history for current patient"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Check if history already exists
+    existing_query = select(MedicalHistory).where(MedicalHistory.patient_id == patient.id)
+    existing_result = await session.exec(existing_query)
+    existing = existing_result.first()
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Medical history already exists. Use PUT to update."
+        )
+
+    # Create history
+    history = MedicalHistory(
+        patient_id=patient.id,
+        **history_data.model_dump()
+    )
+
+    session.add(history)
+    await session.commit()
+    await session.refresh(history)
+
+    return history
+
+
+@router.put("/me/medical-history", response_model=MedicalHistory)
+async def update_medical_history(
+    history_data: MedicalHistoryUpdate,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Update medical history for current patient"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Get medical history
+    query = select(MedicalHistory).where(MedicalHistory.patient_id == patient.id)
+    result = await session.exec(query)
+    history = result.first()
+
+    if not history:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Medical history not found. Use POST to create."
+        )
+
+    # Update fields
+    update_data = history_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(history, field, value)
+
+    history.updated_at = datetime.utcnow()
+
+    await session.commit()
+    await session.refresh(history)
+
+    return history
+
+
+@router.delete("/me/medical-history", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_medical_history(
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Delete medical history for current patient"""
+    # Get patient
+    patient_query = select(Patient).where(Patient.user_id == current_user_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    # Get medical history
+    query = select(MedicalHistory).where(MedicalHistory.patient_id == patient.id)
+    result = await session.exec(query)
+    history = result.first()
+
+    if not history:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Medical history not found"
+        )
+
+    await session.delete(history)
+    await session.commit()
+
+    return None
+
+
+# ============================================================================
+# NUTRITIONIST ENDPOINTS - For accessing patient data
+# ============================================================================
+
+@router.get("/{patient_id}/anthropometrics", response_model=List[AnthropometricRecord])
+async def get_patient_anthropometric_records(
+    patient_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session),
+    limit: int = Query(default=10, le=100),
+    offset: int = Query(default=0, ge=0)
+):
+    """Get anthropometric records for a patient (for nutritionists)"""
+    # TODO: Add authorization check - only assigned nutritionist can access
+    query = (
+        select(AnthropometricRecord)
+        .where(AnthropometricRecord.patient_id == patient_id)
+        .order_by(AnthropometricRecord.measurement_date.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await session.exec(query)
+    records = result.all()
+
+    return records
+
+
+@router.get("/{patient_id}/medical-history", response_model=MedicalHistory)
+async def get_patient_medical_history(
+    patient_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get medical history for a patient (for nutritionists)"""
+    # TODO: Add authorization check - only assigned nutritionist can access
+    query = select(MedicalHistory).where(MedicalHistory.patient_id == patient_id)
+    result = await session.exec(query)
+    history = result.first()
+
+    if not history:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Medical history not found"
+        )
+
+    return history

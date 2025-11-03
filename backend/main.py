@@ -12,7 +12,7 @@ import uuid
 from core.config import get_settings
 from core.database import init_db
 from core.logging import LoggingMiddleware, log_success, log_error
-from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning
+from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp
 from api.routers import auth_new
 
 logger = logging.getLogger(__name__)
@@ -57,8 +57,10 @@ def create_application() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allow_headers=["*"],
+        expose_headers=["X-Request-ID", "X-Process-Time"],
+        max_age=3600,  # Cache preflight requests for 1 hour
     )
     
     # Request tracking middleware
@@ -111,7 +113,16 @@ def create_application() -> FastAPI:
     # Import and include equivalences router
     from api.routers import equivalences
     app.include_router(equivalences.router, prefix="/api/v1/equivalences", tags=["equivalences"])
-    
+
+    # AI Vision router
+    app.include_router(vision.router, prefix="/api/v1/vision", tags=["ai-vision"])
+
+    # Laboratory Data router
+    app.include_router(laboratory.router, prefix="/api/v1/laboratory", tags=["laboratory"])
+
+    # WhatsApp router
+    app.include_router(whatsapp.router, prefix="/api/v1/whatsapp", tags=["whatsapp"])
+
     return app
 
 app = create_application()

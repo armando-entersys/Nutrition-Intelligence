@@ -1,7 +1,8 @@
 """
 Recipe management endpoints with rating and commenting system
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import status as http_status
 from sqlmodel import Session, select
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
@@ -143,7 +144,7 @@ async def get_recipes(
     except Exception as e:
         log_error(f"Error obteniendo recetas: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch recipes"
         )
 

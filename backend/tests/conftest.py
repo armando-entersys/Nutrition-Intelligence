@@ -141,3 +141,56 @@ async def sample_recipe(test_session: AsyncSession, sample_patient: Patient) -> 
     await test_session.commit()
     await test_session.refresh(recipe)
     return recipe
+
+
+@pytest.fixture
+def sample_lab_data_dict() -> dict:
+    """Sample laboratory data dictionary for testing."""
+    from datetime import date
+    return {
+        "patient_id": 1,
+        "study_date": date(2025, 1, 15),
+        "test_type": "blood_chemistry",
+        "laboratory_name": "Laboratorio Chopo",
+        "ordering_physician": "Dr. Juan Pérez",
+        "fasting_glucose_mgdl": 95.0,
+        "hemoglobin_a1c_pct": 5.5,
+        "total_cholesterol_mgdl": 180.0,
+        "ldl_cholesterol_mgdl": 100.0,
+        "hdl_cholesterol_mgdl": 55.0,
+        "triglycerides_mgdl": 125.0,
+        "creatinine_mgdl": 0.9,
+        "alt_tgp_UI_l": 25.0,
+        "hemoglobin_g_dl": 14.5,
+        "vitamin_d_ng_ml": 35.0
+    }
+
+
+@pytest.fixture
+def sample_lab_data_high_values() -> dict:
+    """Sample laboratory data with high values for testing alerts."""
+    from datetime import date
+    return {
+        "patient_id": 1,
+        "study_date": date(2025, 1, 15),
+        "test_type": "blood_chemistry",
+        "laboratory_name": "Laboratorio Chopo",
+        "fasting_glucose_mgdl": 300.0,  # Very high - should trigger alert
+        "hemoglobin_a1c_pct": 8.5,  # Diabetes range
+        "total_cholesterol_mgdl": 250.0,  # High
+        "hdl_cholesterol_mgdl": 30.0,  # Low HDL
+        "triglycerides_mgdl": 250.0,  # High
+        "creatinine_mgdl": 2.5  # Elevated - kidney concern
+    }
+
+
+@pytest.fixture
+def sample_whatsapp_message_dict() -> dict:
+    """Sample WhatsApp message data for testing."""
+    return {
+        "patient_id": 1,
+        "recipient_phone": "+525512345678",
+        "recipient_name": "Test Patient",
+        "message_type": "appointment_reminder",
+        "message_body": "Recordatorio de cita para mañana a las 10:00 AM"
+    }

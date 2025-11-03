@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ThemeProvider, CssBaseline, useMediaQuery, useTheme } from '@mui/material';
-import { Box, AppBar, Toolbar, Container, Card, CardContent, Typography, IconButton, Badge, Avatar, Chip, Grid, Link as MuiLink } from '@mui/material';
-import { Notifications as NotificationsIcon, Restaurant as RestaurantIcon, Menu as MenuIcon } from '@mui/icons-material';
+import { Box, AppBar, Toolbar, Card, CardContent, Typography, IconButton, Badge, Avatar, Chip, Grid, Link as MuiLink } from '@mui/material';
+import {
+  Notifications as NotificationsIcon,
+  Restaurant as RestaurantIcon,
+  Menu as MenuIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Security as SecurityIcon,
+  ViewModule as ViewModuleIcon,
+  BarChart as BarChartIcon,
+  Assignment as AssignmentIcon,
+  Storage as StorageIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import theme from './theme/theme';
-import EquivalenceVisualizer from './components/equivalences/EquivalenceVisualizer';
 import EquivalencesBrowser from './components/equivalences/EquivalencesBrowser';
 import RealTimeMonitor from './components/dashboard/RealTimeMonitor';
 import RoleBasedDashboard from './components/dashboard/RoleBasedDashboard';
-import RecipeBrowser from './components/recipes/RecipeBrowser';
 import RecipesBrowser from './components/recipes/RecipesBrowser';
 import FoodsBrowser from './components/foods/FoodsBrowser';
 import PatientsBrowser from './components/patients/PatientsBrowser';
@@ -17,9 +26,13 @@ import NutritionCalculator from './components/calculator/NutritionCalculator';
 import EscanerNOM051 from './components/scanner/EscanerNOM051';
 import ExpedienteClinico from './components/expediente/ExpedienteClinico';
 import GeneradorDietas from './components/dietas/GeneradorDietas';
-import AnalizadorFotos from './components/analisis-fotos/AnalizadorFotos';
+import CalculadoraRequerimientos from './components/dietas/CalculadoraRequerimientos';
+import AnalizadorFotosMejorado from './components/analisis-fotos/AnalizadorFotosMejorado';
 import GamificacionMexicana from './components/gamificacion/GamificacionMexicana';
 import ChatNutriologoIA from './components/chat-ia/ChatNutriologoIA';
+import Recordatorio24Horas from './components/recordatorio/Recordatorio24Horas';
+import AdminPlaceholder from './components/admin/AdminPlaceholder';
+import TestingDashboard from './components/testing/TestingDashboard';
 import Sidebar from './components/navigation/Sidebar';
 import Breadcrumbs from './components/common/Breadcrumbs';
 import { ToastProvider } from './components/common/Toast';
@@ -45,13 +58,29 @@ function App() {
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [currentRole, setCurrentRole] = useState('nutritionist'); // nutritionist, patient, admin
 
+  // Debug: Monitor currentRole changes
+  useEffect(() => {
+    console.log('🔔 App.js - currentRole changed to:', currentRole, {
+      currentView,
+      timestamp: new Date().toISOString()
+    });
+  }, [currentRole]);
+
+  // Debug: Monitor currentView changes
+  useEffect(() => {
+    console.log('📍 App.js - currentView changed to:', currentView, {
+      currentRole,
+      timestamp: new Date().toISOString()
+    });
+  }, [currentView]);
+
   // Mock user for testing (in real app, this would come from authentication)
   const mockUser = {
     id: 1,
     username: "Dra. Sara Gallegos",
     email: "contacto@saragallegos.com",
     website: "https://saragallegos.com/",
-    roles: ['nutritionist', 'patient'], // User can have multiple roles
+    roles: ['nutritionist', 'patient', 'admin'], // User can have multiple roles for testing
     token: "mock-jwt-token" // In real app, this would be a real JWT
   };
 
@@ -68,7 +97,7 @@ function App() {
         try {
           // Probar ruta alternativa
           console.log('Trying base URL:', `${API_BASE_URL}/`);
-          const response = await axios.get(`${API_BASE_URL}/`);
+          await axios.get(`${API_BASE_URL}/`);
           setBackendStatus('✅ Backend Conectado (ruta /)');
           setApiData({ message: 'Backend activo pero sin endpoint /health' });
         } catch (err) {
@@ -105,9 +134,19 @@ function App() {
       scanner: 'Escáner NOM-051',
       expediente: 'Expediente Clínico',
       dietas: 'Dietas Dinámicas',
+      recordatorio: 'Recordatorio 24 Horas',
+      'calculadora-requerimientos': 'Calculadora de Requerimientos',
       'analisis-fotos': 'Análisis de Fotos IA',
       gamificacion: 'Gamificación Mexicana',
-      'chat-ia': 'Chat Nutriólogo Virtual'
+      'chat-ia': 'Chat Nutriólogo Virtual',
+      'admin-users': 'Gestión de Usuarios',
+      'admin-roles': 'Roles y Permisos',
+      'admin-views': 'Vistas por Rol',
+      'admin-reports': 'Reportes del Sistema',
+      'admin-logs': 'Logs del Sistema',
+      'admin-database': 'Base de Datos',
+      'admin-settings': 'Configuración del Sistema',
+      'testing-dashboard': 'Dashboard de Pruebas'
     };
     return titles[currentView] || 'Dashboard';
   };
@@ -135,18 +174,14 @@ function App() {
   };
 
   const renderCurrentView = () => {
-    // Si el rol es paciente, siempre mostrar el dashboard de paciente
-    if (currentRole === 'patient') {
-      return (
-        <Box sx={{ width: '100%' }}>
-          <RoleBasedDashboard currentRole="patient" onNavigate={setCurrentView} />
-        </Box>
-      );
-    }
-
-    // Vistas para nutricionista/admin
+    // Vistas disponibles para todos los roles
     switch (currentView) {
+      // Vistas restringidas a nutricionista/admin
       case 'foods':
+        if (currentRole === 'patient') {
+          setCurrentView('dashboard');
+          return null;
+        }
         return (
           <Box sx={{ width: '100%' }}>
             <FoodsBrowser />
@@ -161,6 +196,10 @@ function App() {
         );
 
       case 'equivalences':
+        if (currentRole === 'patient') {
+          setCurrentView('dashboard');
+          return null;
+        }
         return (
           <Box sx={{ width: '100%' }}>
             <EquivalencesBrowser />
@@ -168,6 +207,10 @@ function App() {
         );
 
       case 'patients':
+        if (currentRole === 'patient') {
+          setCurrentView('dashboard');
+          return null;
+        }
         return (
           <Box sx={{ width: '100%' }}>
             <PatientsBrowser />
@@ -175,6 +218,10 @@ function App() {
         );
 
       case 'calculator':
+        if (currentRole === 'patient') {
+          setCurrentView('dashboard');
+          return null;
+        }
         return (
           <Box sx={{ width: '100%' }}>
             <NutritionCalculator />
@@ -189,23 +236,49 @@ function App() {
         );
 
       case 'expediente':
+        if (currentRole === 'patient') {
+          setCurrentView('dashboard');
+          return null;
+        }
         return (
           <Box sx={{ width: '100%' }}>
             <ExpedienteClinico />
           </Box>
         );
 
+      case 'recordatorio':
+        return (
+          <Box sx={{ width: '100%' }}>
+            <Recordatorio24Horas />
+          </Box>
+        );
+
       case 'dietas':
+        if (currentRole === 'patient') {
+          setCurrentView('dashboard');
+          return null;
+        }
         return (
           <Box sx={{ width: '100%' }}>
             <GeneradorDietas />
           </Box>
         );
 
+      case 'calculadora-requerimientos':
+        if (currentRole === 'patient') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <Box sx={{ width: '100%' }}>
+            <CalculadoraRequerimientos />
+          </Box>
+        );
+
       case 'analisis-fotos':
         return (
           <Box sx={{ width: '100%' }}>
-            <AnalizadorFotos />
+            <AnalizadorFotosMejorado />
           </Box>
         );
 
@@ -223,55 +296,219 @@ function App() {
           </Box>
         );
 
+      case 'admin-users':
+        if (currentRole !== 'admin') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <AdminPlaceholder
+            title="Gestión de Usuarios"
+            description="Administra usuarios del sistema, crea nuevos usuarios, asigna roles y permisos"
+            icon={AdminPanelSettingsIcon}
+            features={[
+              'Crear y editar usuarios',
+              'Asignar roles (Admin, Nutricionista, Paciente)',
+              'Gestionar permisos individuales',
+              'Ver historial de accesos',
+              'Activar/desactivar usuarios',
+              'Resetear contraseñas'
+            ]}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+
+      case 'admin-roles':
+        if (currentRole !== 'admin') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <AdminPlaceholder
+            title="Roles y Permisos"
+            description="Configura roles del sistema y sus permisos asociados"
+            icon={SecurityIcon}
+            features={[
+              'Crear roles personalizados',
+              'Asignar permisos granulares',
+              'Definir acceso a vistas',
+              'Configurar restricciones por rol',
+              'Auditoría de cambios en permisos',
+              'Templates de roles predefinidos'
+            ]}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+
+      case 'admin-views':
+        if (currentRole !== 'admin') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <AdminPlaceholder
+            title="Vistas por Rol"
+            description="Configura qué vistas y funcionalidades están disponibles para cada rol"
+            icon={ViewModuleIcon}
+            features={[
+              'Habilitar/deshabilitar vistas por rol',
+              'Configurar menú de navegación',
+              'Personalizar dashboard por rol',
+              'Vista previa de interfaz por rol',
+              'Exportar configuraciones',
+              'Importar templates'
+            ]}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+
+      case 'admin-reports':
+        if (currentRole !== 'admin') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <AdminPlaceholder
+            title="Reportes del Sistema"
+            description="Genera y visualiza reportes de uso, actividad y rendimiento del sistema"
+            icon={BarChartIcon}
+            features={[
+              'Reportes de uso por usuario',
+              'Estadísticas de planes generados',
+              'Métricas de rendimiento',
+              'Análisis de consultas IA',
+              'Exportación a PDF/Excel',
+              'Reportes programados'
+            ]}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+
+      case 'admin-logs':
+        if (currentRole !== 'admin') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <AdminPlaceholder
+            title="Logs del Sistema"
+            description="Visualiza y analiza logs de actividad, errores y auditoría del sistema"
+            icon={AssignmentIcon}
+            features={[
+              'Visor de logs en tiempo real',
+              'Filtrado por tipo y nivel',
+              'Búsqueda avanzada en logs',
+              'Exportación de logs',
+              'Alertas automáticas',
+              'Rotación de logs configurable'
+            ]}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+
+      case 'admin-database':
+        if (currentRole !== 'admin') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <AdminPlaceholder
+            title="Gestión de Base de Datos"
+            description="Herramientas de mantenimiento y administración de la base de datos"
+            icon={StorageIcon}
+            features={[
+              'Backup y restauración',
+              'Optimización de tablas',
+              'Estadísticas de uso',
+              'Limpieza de datos obsoletos',
+              'Migraciones de esquema',
+              'Monitoreo de rendimiento'
+            ]}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+
+      case 'admin-settings':
+        if (currentRole !== 'admin') {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <AdminPlaceholder
+            title="Configuración del Sistema"
+            description="Ajustes generales y configuración avanzada del sistema"
+            icon={SettingsIcon}
+            features={[
+              'Configuración general',
+              'Parámetros de API',
+              'Integraciones externas',
+              'Notificaciones del sistema',
+              'Personalización de marca',
+              'Variables de entorno'
+            ]}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+
+      case 'testing-dashboard':
+        return (
+          <Box sx={{ width: '100%' }}>
+            <TestingDashboard />
+          </Box>
+        );
+
       case 'dashboard':
       default:
         return (
           <Box sx={{ width: '100%' }}>
             <Grid container spacing={3}>
-              {/* System Status Card */}
-              <Grid item xs={12} md={6}>
-                <MotionCard
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  elevation={2}
-                >
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom color="primary" fontWeight={600}>
-                      Estado del Sistema
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
-                        <Typography variant="body1">🌐 Frontend:</Typography>
-                        <Chip label="Activo" color="success" size="small" />
+              {/* System Status Card - SOLO ADMIN */}
+              {currentRole === 'admin' && (
+                <Grid item xs={12} md={6}>
+                  <MotionCard
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    elevation={2}
+                  >
+                    <CardContent>
+                      <Typography variant="h5" gutterBottom color="primary" fontWeight={600}>
+                        Estado del Sistema
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                          <Typography variant="body1">🌐 Frontend:</Typography>
+                          <Chip label="Activo" color="success" size="small" />
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                          <Typography variant="body1">🔧 Backend:</Typography>
+                          <Chip
+                            label={backendStatus}
+                            color={backendStatus.includes('✅') ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                          <Typography variant="body1">🗄️ PostgreSQL:</Typography>
+                          <Chip label="Activo (puerto 5432)" color="success" size="small" />
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                          <Typography variant="body1">🔴 Redis:</Typography>
+                          <Chip label="Activo (puerto 6379)" color="success" size="small" />
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                          <Typography variant="body1">📦 MinIO:</Typography>
+                          <Chip label="Activo (puertos 9000/9001)" color="success" size="small" />
+                        </Box>
                       </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
-                        <Typography variant="body1">🔧 Backend:</Typography>
-                        <Chip
-                          label={backendStatus}
-                          color={backendStatus.includes('✅') ? 'success' : 'error'}
-                          size="small"
-                        />
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
-                        <Typography variant="body1">🗄️ PostgreSQL:</Typography>
-                        <Chip label="Activo (puerto 5432)" color="success" size="small" />
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
-                        <Typography variant="body1">🔴 Redis:</Typography>
-                        <Chip label="Activo (puerto 6379)" color="success" size="small" />
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-                        <Typography variant="body1">📦 MinIO:</Typography>
-                        <Chip label="Activo (puertos 9000/9001)" color="success" size="small" />
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </MotionCard>
-              </Grid>
+                    </CardContent>
+                  </MotionCard>
+                </Grid>
+              )}
 
-              {/* Admin Links Card */}
-              <Grid item xs={12} md={6}>
+              {/* Admin Links Card - SOLO ADMIN */}
+              {currentRole === 'admin' && (
+                <Grid item xs={12} md={6}>
                 <MotionCard
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -365,19 +602,22 @@ function App() {
                   </CardContent>
                 </MotionCard>
               </Grid>
+              )}
 
-              {/* Real-Time Monitor */}
-              <Grid item xs={12}>
-                <MotionCard
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  elevation={2}
-                  sx={{ bgcolor: 'grey.50' }}
-                >
-                  <RealTimeMonitor />
-                </MotionCard>
-              </Grid>
+              {/* Real-Time Monitor - SOLO ADMIN */}
+              {currentRole === 'admin' && (
+                <Grid item xs={12}>
+                  <MotionCard
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    elevation={2}
+                    sx={{ bgcolor: 'grey.50' }}
+                  >
+                    <RealTimeMonitor />
+                  </MotionCard>
+                </Grid>
+              )}
 
               {/* Role-Based Dashboard */}
               <Grid item xs={12}>
@@ -387,12 +627,12 @@ function App() {
                   transition={{ duration: 0.5, delay: 0.3 }}
                   elevation={2}
                 >
-                  <RoleBasedDashboard onNavigate={setCurrentView} />
+                  <RoleBasedDashboard currentRole={currentRole} onNavigate={setCurrentView} />
                 </MotionCard>
               </Grid>
 
-              {/* Backend Response */}
-              {apiData && (
+              {/* Backend Response - SOLO ADMIN */}
+              {currentRole === 'admin' && apiData && (
                 <Grid item xs={12}>
                   <MotionCard
                     initial={{ opacity: 0, y: 20 }}

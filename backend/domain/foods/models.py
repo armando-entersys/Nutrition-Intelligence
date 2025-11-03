@@ -100,7 +100,6 @@ class Food(SQLModel, table=True):
     
     # Relationships
     recipe_items: List["RecipeItem"] = Relationship(back_populates="food")
-    equivalences: List["FoodEquivalence"] = Relationship(back_populates="food")
     
     @property
     def calories_per_100g(self) -> float:

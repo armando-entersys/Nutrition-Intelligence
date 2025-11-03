@@ -1,7 +1,7 @@
 const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
-  testDir: './tests/ux',
+  testDir: './tests',
   timeout: 30000,
   expect: {
     timeout: 5000
@@ -26,10 +26,11 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm start',
-    url: 'http://localhost:3002',
-    reuseExistingServer: true,
-    timeout: 120000,
-  },
+  // webServer config disabled - frontend is already running on port 3005
+  // webServer: {
+  //   command: 'npm start',
+  //   url: 'http://localhost:3005',
+  //   reuseExistingServer: true,
+  //   timeout: 120000,
+  // },
 });

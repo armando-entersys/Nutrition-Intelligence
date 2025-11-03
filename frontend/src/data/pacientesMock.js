@@ -137,8 +137,36 @@ export const PACIENTES_MOCK = [
       // Antecedentes patológicos
       antecedentes_patologicos: {
         enfermedades_cronicas: [],
-        cirugias_previas: [],
-        hospitalizaciones: [],
+        cirugias_previas: [
+          {
+            tipo: 'Cesárea',
+            fecha: new Date('2015-06-20'),
+            hospital: 'Hospital General de Iztapalapa',
+            motivo: 'Parto complicado',
+            complicaciones: false
+          },
+          {
+            tipo: 'Apendicectomía',
+            fecha: new Date('2008-11-15'),
+            hospital: 'IMSS Unidad 68',
+            motivo: 'Apendicitis aguda',
+            complicaciones: false
+          }
+        ],
+        hospitalizaciones: [
+          {
+            razon: 'Parto por cesárea',
+            fecha: new Date('2015-06-20'),
+            duracion_dias: 3,
+            hospital: 'Hospital General de Iztapalapa'
+          },
+          {
+            razon: 'Apendicitis',
+            fecha: new Date('2008-11-15'),
+            duracion_dias: 2,
+            hospital: 'IMSS Unidad 68'
+          }
+        ],
         alergias_medicamentos: [],
         alergias_alimentos: ['Camarones'],
         intolerancias_alimentarias: ['Lactosa (leve)']

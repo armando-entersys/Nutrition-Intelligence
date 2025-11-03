@@ -1,0 +1,33 @@
+{
+  "name": "nutrition-intelligence-e2e-tests",
+  "version": "1.0.0",
+  "description": "E2E Testing Suite for Nutrition Intelligence using chrome-devtools-mcp",
+  "main": "run-tests.js",
+  "scripts": {
+    "test": "node run-tests.js",
+    "test:headless": "HEADLESS=true node run-tests.js",
+    "test:watch": "nodemon --watch *.test.js --exec 'node run-tests.js'",
+    "report": "node -e \"require('open')(require('path').join(__dirname, '../reports/html/test-report.html'))\"",
+    "clean": "rm -rf ../reports/* ../screenshots/* ../videos/*"
+  },
+  "keywords": [
+    "e2e",
+    "testing",
+    "chrome-devtools",
+    "mcp",
+    "nutrition"
+  ],
+  "author": "Nutrition Intelligence Team",
+  "license": "MIT",
+  "dependencies": {
+    "chai": "^4.3.10",
+    "chrome-devtools-mcp": "latest",
+    "mocha": "^10.2.0",
+    "playwright": "^1.40.1",
+    "playwright-chromium": "^1.40.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "open": "^10.0.2"
+  }
+}

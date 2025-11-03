@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config/api';
 
 const EquivalenceVisualizer = ({ patientId = 1 }) => {
   const [groups, setGroups] = useState([]);
@@ -18,11 +19,11 @@ const EquivalenceVisualizer = ({ patientId = 1 }) => {
       setLoading(true);
       
       // Cargar grupos de equivalencias
-      const groupsResponse = await axios.get('http://localhost:8001/api/v1/equivalences/groups');
+      const groupsResponse = await axios.get(`${API_BASE_URL}/api/v1/equivalences/groups`);
       setGroups(groupsResponse.data);
-      
+
       // Cargar metas del paciente
-      const goalsResponse = await axios.get(`http://localhost:8001/api/v1/equivalences/patient/${patientId}/goals`);
+      const goalsResponse = await axios.get(`${API_BASE_URL}/api/v1/equivalences/patient/${patientId}/goals`);
       setPatientGoals(goalsResponse.data);
       
       // Cargar progreso de hoy (simulado)
@@ -44,7 +45,7 @@ const EquivalenceVisualizer = ({ patientId = 1 }) => {
 
   const loadAlternatives = async (group) => {
     try {
-      const response = await axios.get(`http://localhost:8001/api/v1/equivalences/groups/${group}/alternatives`);
+      const response = await axios.get(`${API_BASE_URL}/api/v1/equivalences/groups/${group}/alternatives`);
       setAlternatives(response.data.alternatives || []);
       setSelectedGroup(response.data);
     } catch (error) {

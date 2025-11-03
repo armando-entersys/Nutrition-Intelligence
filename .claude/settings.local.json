@@ -25,7 +25,18 @@
       "WebSearch",
       "Bash(gcloud:*)",
       "WebFetch(domain:m3.material.io)",
-      "WebFetch(domain:design.google)"
+      "WebFetch(domain:design.google)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(pip install:*)",
+      "Bash(tesseract:*)",
+      "Bash(winget install:*)",
+      "Bash(tar:*)",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(uvicorn:*)"
     ],
     "deny": []
   }

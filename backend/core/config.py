@@ -1,24 +1,24 @@
 """
 Configuration settings for Nutrition Intelligence Platform
 """
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
-from typing import List, Optional
+from typing import List, Optional, Union
 import os
 from functools import lru_cache
 
 class Settings(BaseSettings):
     """Application settings"""
-    
+
     # Environment
     environment: str = Field(default="development", env="ENVIRONMENT")
     debug: bool = Field(default=False, env="DEBUG")
-    
+
     # API Configuration
     api_title: str = "Nutrition Intelligence API"
     api_version: str = "1.0.0"
-    allowed_hosts: List[str] = Field(default=["localhost", "127.0.0.1"], env="ALLOWED_HOSTS")
-    cors_origins: List[str] = Field(default=["http://localhost:3000", "http://localhost:3001"], env="CORS_ORIGINS")
+    allowed_hosts: Union[str, List[str]] = Field(default="localhost,127.0.0.1")
+    cors_origins: Union[str, List[str]] = Field(default="http://localhost:3000,http://localhost:3001")
     
     # Database
     database_url: str = Field(env="DATABASE_URL")
@@ -63,8 +63,13 @@ class Settings(BaseSettings):
     @classmethod
     def parse_list_from_string(cls, v):
         if isinstance(v, str):
-            return [item.strip() for item in v.split(",")]
-        return v
+            # Parse comma-separated string into list
+            return [item.strip() for item in v.split(",") if item.strip()]
+        elif isinstance(v, list):
+            # Already a list, just return it
+            return v
+        # Default fallback
+        return []
 
     @field_validator("database_url")
     @classmethod
@@ -79,11 +84,13 @@ class Settings(BaseSettings):
         if not v or len(v) < 32:
             raise ValueError("SECRET_KEY must be at least 32 characters long")
         return v
-    
-    model_config = {
-        "env_file": ".env",
-        "case_sensitive": False
-    }
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 @lru_cache()
 def get_settings() -> Settings:

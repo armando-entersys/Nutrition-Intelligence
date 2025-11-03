@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config/api';
 
 const RealTimeMonitor = () => {
   const [systemStatus, setSystemStatus] = useState({});
@@ -12,14 +13,14 @@ const RealTimeMonitor = () => {
     const fetchSystemData = async () => {
       try {
         // Obtener estado del sistema
-        const healthResponse = await axios.get('http://localhost:8001/health');
+        const healthResponse = await axios.get(`${API_BASE_URL}/health`);
         setSystemStatus(healthResponse.data);
 
         // Obtener grupos de equivalencias para metrics
-        const equivalencesResponse = await axios.get('http://localhost:8001/api/v1/equivalences/groups');
-        
+        const equivalencesResponse = await axios.get(`${API_BASE_URL}/api/v1/equivalences/groups`);
+
         // Obtener niveles de actividad para metrics
-        const activityResponse = await axios.get('http://localhost:8001/api/v1/nutrition-calculator/activity-levels');
+        const activityResponse = await axios.get(`${API_BASE_URL}/api/v1/nutrition-calculator/activity-levels`);
         
         setApiMetrics({
           totalEndpoints: 8,
@@ -199,9 +200,9 @@ const RealTimeMonitor = () => {
       <div style={styles.adminSection}>
         <h3 style={styles.adminTitle}>🛠️ Herramientas de Administración</h3>
         <div style={styles.adminLinks}>
-          <a 
-            href="http://localhost:8001/docs" 
-            target="_blank" 
+          <a
+            href={`${API_BASE_URL}/docs`}
+            target="_blank"
             rel="noopener noreferrer"
             style={styles.adminLink}
           >

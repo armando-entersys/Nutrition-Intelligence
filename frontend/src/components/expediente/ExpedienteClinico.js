@@ -50,6 +50,7 @@ import HistoriaClinicaView from './HistoriaClinicaView';
 import SignosVitalesView from './SignosVitalesView';
 import HabitosView from './HabitosView';
 import ActividadFisicaView from './ActividadFisicaView';
+import DatosLaboratorioView from './DatosLaboratorioView';
 
 const ExpedienteClinico = () => {
   const [selectedPatient, setSelectedPatient] = useState(PACIENTES_MOCK[0]);
@@ -60,9 +61,10 @@ const ExpedienteClinico = () => {
     { id: 0, label: 'Datos Generales', icon: <PersonIcon />, component: DatosGeneralesView },
     { id: 1, label: 'Antropometría', icon: <MonitorWeightIcon />, component: MedicionesAntropometricasView },
     { id: 2, label: 'Historia Clínica', icon: <MedicalServicesIcon />, component: HistoriaClinicaView },
-    { id: 3, label: 'Signos Vitales', icon: <FavoriteIcon />, component: SignosVitalesView },
-    { id: 4, label: 'Hábitos', icon: <RestaurantIcon />, component: HabitosView },
-    { id: 5, label: 'Actividad Física', icon: <DirectionsRunIcon />, component: ActividadFisicaView },
+    { id: 3, label: 'Laboratorios', icon: <ScienceIcon />, component: DatosLaboratorioView },
+    { id: 4, label: 'Signos Vitales', icon: <FavoriteIcon />, component: SignosVitalesView },
+    { id: 5, label: 'Hábitos', icon: <RestaurantIcon />, component: HabitosView },
+    { id: 6, label: 'Actividad Física', icon: <DirectionsRunIcon />, component: ActividadFisicaView },
   ];
 
   const handleTabChange = (event, newValue) => {

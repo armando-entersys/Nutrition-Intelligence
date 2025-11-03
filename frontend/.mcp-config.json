@@ -1,0 +1,84 @@
+{
+  "$schema": "https://github.com/modelcontextprotocol/servers/blob/main/src/chrome-devtools/schema.json",
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
+      "env": {
+        "CHROME_EXECUTABLE_PATH": "",
+        "HEADLESS": "false",
+        "VIEWPORT_WIDTH": "1920",
+        "VIEWPORT_HEIGHT": "1080",
+        "TIMEOUT": "30000",
+        "SCREENSHOTS_DIR": "./tests/screenshots",
+        "VIDEOS_DIR": "./tests/videos",
+        "REPORTS_DIR": "./tests/reports"
+      }
+    }
+  },
+  "testConfig": {
+    "baseURL": "http://localhost:3002",
+    "testDir": "./tests/e2e-mcp",
+    "timeout": 30000,
+    "retries": 2,
+    "workers": 1,
+    "reporter": {
+      "html": {
+        "enabled": true,
+        "outputDir": "./tests/reports/html",
+        "open": "always"
+      },
+      "json": {
+        "enabled": true,
+        "outputFile": "./tests/reports/test-results.json"
+      },
+      "junit": {
+        "enabled": true,
+        "outputFile": "./tests/reports/junit.xml"
+      }
+    },
+    "use": {
+      "trace": "on-first-retry",
+      "screenshot": "only-on-failure",
+      "video": "retain-on-failure",
+      "launchOptions": {
+        "args": [
+          "--start-maximized",
+          "--disable-blink-features=AutomationControlled",
+          "--disable-dev-shm-usage",
+          "--no-sandbox"
+        ],
+        "devtools": true
+      }
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "metricsEndpoint": "http://localhost:9090/api/v1/write",
+    "exportInterval": 5000,
+    "metrics": [
+      "page_load_time",
+      "first_contentful_paint",
+      "time_to_interactive",
+      "total_blocking_time",
+      "cumulative_layout_shift",
+      "largest_contentful_paint"
+    ]
+  },
+  "advanced": {
+    "captureNetworkTraffic": true,
+    "captureConsoleMessages": true,
+    "capturePerformanceMetrics": true,
+    "recordCoverage": {
+      "js": true,
+      "css": true
+    },
+    "accessibility": {
+      "checkA11y": true,
+      "wcagLevel": "AA"
+    }
+  }
+}

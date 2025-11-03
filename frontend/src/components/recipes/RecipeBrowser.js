@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import RecipeRating from './RecipeRating';
+import { API_BASE_URL } from '../../config/api';
 
 const RecipeBrowser = ({ currentUser }) => {
   const [recipes, setRecipes] = useState([]);
@@ -58,7 +59,7 @@ const RecipeBrowser = ({ currentUser }) => {
         }
       });
 
-      const response = await axios.get(`http://localhost:8001/api/v1/recipes?${params}`);
+      const response = await axios.get(`${API_BASE_URL}/api/v1/recipes?${params}`);
       setRecipes(response.data);
     } catch (error) {
       console.error('Error fetching recipes:', error);

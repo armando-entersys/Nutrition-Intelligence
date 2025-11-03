@@ -10,6 +10,14 @@ const RoleBasedDashboard = ({ currentRole: propCurrentRole, onNavigate }) => {
   // Use prop role if provided, otherwise use user's primary role
   const currentRole = propCurrentRole || user?.primary_role;
 
+  // Debug logging
+  console.log('🔍 RoleBasedDashboard Debug:', {
+    propCurrentRole,
+    userPrimaryRole: user?.primary_role,
+    finalCurrentRole: currentRole,
+    timestamp: new Date().toISOString()
+  });
+
   // Simulated user data (en una implementación real vendría del contexto de auth)
   const mockUser = {
     id: 1,
@@ -107,6 +115,11 @@ const RoleBasedDashboard = ({ currentRole: propCurrentRole, onNavigate }) => {
 
       {/* Dashboard específico por rol */}
       <div style={styles.dashboardContent}>
+        {console.log('🎯 Rendering dashboard for role:', currentRole, {
+          isAdmin: currentRole === 'admin',
+          isNutritionist: currentRole === 'nutritionist',
+          isPatient: currentRole === 'patient'
+        })}
         {currentRole === 'admin' && <AdminDashboard data={dashboardData} onNavigate={onNavigate} />}
         {currentRole === 'nutritionist' && <NutritionistDashboard data={dashboardData} user={user} onNavigate={onNavigate} />}
         {currentRole === 'patient' && <PatientDashboard data={dashboardData} user={user} onNavigate={onNavigate} />}
@@ -116,52 +129,133 @@ const RoleBasedDashboard = ({ currentRole: propCurrentRole, onNavigate }) => {
 };
 
 // Componente Dashboard para Administrador
-const AdminDashboard = ({ data }) => (
+const AdminDashboard = ({ data, onNavigate }) => (
   <div style={styles.adminDashboard}>
-    <h2>🛠️ Panel de Administración</h2>
-    <div style={styles.metricsGrid}>
-      <MetricCard 
-        title="Total Usuarios" 
-        value={data.totalUsers} 
-        icon="👥" 
-        color="#3498db"
-      />
-      <MetricCard 
-        title="Nutricionistas Activos" 
-        value={data.activeNutritionists} 
-        icon="🥗" 
-        color="#27ae60"
-      />
-      <MetricCard 
-        title="Pacientes Activos" 
-        value={data.activePatients} 
-        icon="👤" 
-        color="#e74c3c"
-      />
-      <MetricCard 
-        title="Salud del Sistema" 
-        value={data.systemHealth} 
-        icon="⚡" 
-        color="#f39c12"
-      />
-      <MetricCard 
-        title="Cálculos Mensuales" 
-        value={data.monthlyCalculations} 
-        icon="📊" 
-        color="#9b59b6"
-      />
-      <MetricCard 
-        title="Logins Hoy" 
-        value={data.dailyLogins} 
-        icon="🚪" 
-        color="#1abc9c"
-      />
+    <h2>⚙️ Panel de Administración del Sistema</h2>
+
+    {/* Métricas del sistema */}
+    <div style={styles.systemMetrics}>
+      <h3>📊 Estado del Sistema</h3>
+      <div style={styles.metricsGrid}>
+        <MetricCard
+          title="Total Usuarios"
+          value={data.totalUsers || 234}
+          icon="👥"
+          color="#3498db"
+        />
+        <MetricCard
+          title="Nutricionistas Activos"
+          value={data.activeNutritionists || 45}
+          icon="🥗"
+          color="#27ae60"
+        />
+        <MetricCard
+          title="Pacientes Registrados"
+          value={data.totalPatients || 189}
+          icon="👤"
+          color="#e74c3c"
+        />
+        <MetricCard
+          title="Salud del Sistema"
+          value={data.systemHealth || "Óptimo"}
+          icon="⚡"
+          color="#f39c12"
+        />
+      </div>
     </div>
-    <div style={styles.adminActions}>
-      <button style={styles.actionButton}>Gestionar Usuarios</button>
-      <button style={styles.actionButton}>Ver Logs del Sistema</button>
-      <button style={styles.actionButton}>Configuración</button>
-      <button style={styles.actionButton}>Reportes</button>
+
+    {/* Acciones Rápidas de Administración */}
+    <div style={styles.quickActions}>
+      <h3>⚡ Herramientas de Administración</h3>
+      <div style={styles.actionGrid}>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('admin-users')}
+        >
+          <span style={styles.actionIcon}>👥</span>
+          Gestionar Usuarios
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('admin-roles')}
+        >
+          <span style={styles.actionIcon}>🔐</span>
+          Roles y Permisos
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('admin-views')}
+        >
+          <span style={styles.actionIcon}>📱</span>
+          Vistas por Rol
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('admin-reports')}
+        >
+          <span style={styles.actionIcon}>📊</span>
+          Reportes del Sistema
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('admin-logs')}
+        >
+          <span style={styles.actionIcon}>📋</span>
+          Logs del Sistema
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('admin-database')}
+        >
+          <span style={styles.actionIcon}>💾</span>
+          Base de Datos
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('admin-settings')}
+        >
+          <span style={styles.actionIcon}>⚙️</span>
+          Configuración
+        </button>
+      </div>
+    </div>
+
+    {/* Estadísticas de uso del sistema */}
+    <div style={styles.usageStats}>
+      <h3>📈 Estadísticas de Uso del Sistema</h3>
+      <div style={styles.metricsGrid}>
+        <MetricCard
+          title="Cálculos Este Mes"
+          value={data.monthlyCalculations || 1250}
+          icon="🧮"
+          color="#9b59b6"
+        />
+        <MetricCard
+          title="Planes Generados"
+          value={data.monthlyPlans || 456}
+          icon="📋"
+          color="#1abc9c"
+        />
+        <MetricCard
+          title="Consultas IA"
+          value={data.aiQueries || 3241}
+          icon="🤖"
+          color="#f39c12"
+        />
+        <MetricCard
+          title="Logins Hoy"
+          value={data.dailyLogins || 67}
+          icon="🚪"
+          color="#3498db"
+        />
+      </div>
+    </div>
+
+    {/* Nota informativa */}
+    <div style={{...styles.infoBox, marginTop: '20px'}}>
+      <p style={{margin: 0, color: '#7f8c8d', fontSize: '14px'}}>
+        💡 <strong>Panel Administrativo:</strong> Utiliza el menú lateral para acceder a las diferentes herramientas de administración del sistema.
+      </p>
     </div>
   </div>
 );
@@ -169,49 +263,98 @@ const AdminDashboard = ({ data }) => (
 // Componente Dashboard para Nutricionista
 const NutritionistDashboard = ({ data, user, onNavigate }) => (
   <div style={styles.nutritionistDashboard}>
-    <h2>🥗 Dashboard del Nutricionista</h2>
-    <div style={styles.metricsGrid}>
-      <MetricCard 
-        title="Pacientes Activos" 
-        value={data.activePatients} 
-        icon="👥" 
-        color="#3498db"
-      />
-      <MetricCard 
-        title="Planes Creados (Esta Semana)" 
-        value={data.weeklyPlansCreated} 
-        icon="📋" 
-        color="#27ae60"
-      />
-      <MetricCard 
-        title="Revisiones Pendientes" 
-        value={data.pendingReviews} 
-        icon="⏰" 
-        color="#e74c3c"
-      />
-      <MetricCard 
-        title="Satisfacción Promedio" 
-        value={`${data.avgPatientSatisfaction}/5`} 
-        icon="⭐" 
-        color="#f39c12"
-      />
-      <MetricCard 
-        title="Consultas Esta Semana" 
-        value={data.thisWeekConsultations} 
-        icon="🗓️" 
-        color="#9b59b6"
-      />
-      <MetricCard 
-        title="Planes Completados" 
-        value={data.completedPlans} 
-        icon="✅" 
-        color="#1abc9c"
-      />
+    <h2>🥗 Panel Profesional - Nutricionista</h2>
+
+    {/* Resumen del día */}
+    <div style={styles.todaySummary}>
+      <h3>📅 Agenda de Hoy</h3>
+      <div style={styles.metricsRow}>
+        <MetricCard
+          title="Citas Hoy"
+          value={data.todayAppointments || 3}
+          icon="👥"
+          color="#3498db"
+        />
+        <MetricCard
+          title="Recordatorios 24h Pendientes"
+          value={data.pending24hRecalls || 5}
+          icon="📝"
+          color="#e74c3c"
+        />
+        <MetricCard
+          title="Fotos por Analizar"
+          value={data.pendingPhotoAnalysis || 8}
+          icon="📸"
+          color="#f39c12"
+        />
+        <MetricCard
+          title="Mensajes de Pacientes"
+          value={data.unreadMessages || 12}
+          icon="💬"
+          color="#9b59b6"
+        />
+      </div>
     </div>
-    
+
+    {/* Próximas citas */}
+    <div style={styles.appointmentsSection}>
+      <h3>🗓️ Próximas Citas</h3>
+      <div style={styles.appointmentsList}>
+        <AppointmentItem
+          time="09:00 AM"
+          patient="María González"
+          type="Seguimiento - Semana 4"
+          status="confirmed"
+        />
+        <AppointmentItem
+          time="10:30 AM"
+          patient="Juan Pérez"
+          type="Primera Consulta"
+          status="pending"
+        />
+        <AppointmentItem
+          time="02:00 PM"
+          patient="Ana Martínez"
+          type="Entrega de Plan"
+          status="confirmed"
+        />
+      </div>
+      <button style={styles.viewAllButton}>Ver Agenda Completa</button>
+    </div>
+
+    {/* Pacientes que requieren atención */}
+    <div style={styles.alertsSection}>
+      <h3>⚠️ Requieren Atención</h3>
+      <div style={styles.alertsList}>
+        <AlertItem
+          patient="Carlos Ramírez"
+          alert="Adherencia baja (45%) - última semana"
+          priority="high"
+        />
+        <AlertItem
+          patient="Laura Torres"
+          alert="Recordatorio 24h vencido (2 días)"
+          priority="medium"
+        />
+        <AlertItem
+          patient="Pedro Sánchez"
+          alert="Signos vitales fuera de rango"
+          priority="high"
+        />
+      </div>
+    </div>
+
+    {/* Herramientas profesionales */}
     <div style={styles.quickActions}>
-      <h3>🚀 Acciones Rápidas</h3>
+      <h3>🛠️ Herramientas Clínicas</h3>
       <div style={styles.actionGrid}>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('expediente')}
+        >
+          <span style={styles.actionIcon}>📋</span>
+          Nuevo Expediente
+        </button>
         <button
           style={styles.quickActionButton}
           onClick={() => onNavigate && onNavigate('calculator')}
@@ -221,49 +364,87 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
         </button>
         <button
           style={styles.quickActionButton}
-          onClick={() => onNavigate && onNavigate('patients')}
-        >
-          <span style={styles.actionIcon}>📋</span>
-          Crear Plan Semanal
-        </button>
-        <button
-          style={styles.quickActionButton}
-          onClick={() => onNavigate && onNavigate('patients')}
-        >
-          <span style={styles.actionIcon}>👤</span>
-          Gestionar Pacientes
-        </button>
-        <button
-          style={styles.quickActionButton}
-          onClick={() => onNavigate && onNavigate('recipes')}
+          onClick={() => onNavigate && onNavigate('dietas')}
         >
           <span style={styles.actionIcon}>🍽️</span>
-          Crear Receta
+          Generar Dieta
         </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('equivalences')}
+        >
+          <span style={styles.actionIcon}>🥗</span>
+          Sistema de Equivalentes
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('analisis-fotos')}
+        >
+          <span style={styles.actionIcon}>📸</span>
+          Análisis de Fotos
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('chat-ia')}
+        >
+          <span style={styles.actionIcon}>💬</span>
+          Chat IA Nutricional
+        </button>
+      </div>
+    </div>
+
+    {/* Estadísticas del mes */}
+    <div style={styles.monthlyStats}>
+      <h3>📈 Estadísticas del Mes</h3>
+      <div style={styles.metricsGrid}>
+        <MetricCard
+          title="Pacientes Activos"
+          value={data.activePatients || 23}
+          icon="👥"
+          color="#3498db"
+        />
+        <MetricCard
+          title="Consultas Realizadas"
+          value={data.monthlyConsultations || 47}
+          icon="🗓️"
+          color="#27ae60"
+        />
+        <MetricCard
+          title="Planes Nutricionales"
+          value={data.monthlyPlans || 18}
+          icon="📋"
+          color="#e74c3c"
+        />
+        <MetricCard
+          title="Satisfacción Promedio"
+          value={`${data.avgPatientSatisfaction || 4.7}/5`}
+          icon="⭐"
+          color="#f39c12"
+        />
       </div>
     </div>
 
     {/* Si también es paciente, mostrar acceso rápido */}
     {user.all_roles.includes('patient') && (
       <div style={styles.hybridSection}>
-        <h3>🔄 Acceso Híbrido</h3>
-        <p>Como también eres paciente, puedes cambiar a tu vista de paciente para gestionar tu propio plan nutricional.</p>
-        <button style={styles.hybridButton}>Ver mi Plan como Paciente</button>
+        <h3>🔄 Vista Personal</h3>
+        <p>Tienes acceso a tu propia vista como paciente.</p>
+        <button style={styles.hybridButton}>Ver Mi Plan Personal</button>
       </div>
     )}
   </div>
 );
 
-// Componente Dashboard para Paciente  
-const PatientDashboard = ({ data, user }) => (
+// Componente Dashboard para Paciente
+const PatientDashboard = ({ data, user, onNavigate }) => (
   <div style={styles.patientDashboard}>
     <h2>🌟 Mi Dashboard Nutricional</h2>
-    
+
     <div style={styles.currentPlanCard}>
       <h3>📋 Plan Actual</h3>
       <p style={styles.planName}>{data.currentPlan}</p>
       <div style={styles.progressBar}>
-        <div 
+        <div
           style={{...styles.progressFill, width: `${data.todayProgress}%`}}
         />
       </div>
@@ -271,28 +452,28 @@ const PatientDashboard = ({ data, user }) => (
     </div>
 
     <div style={styles.metricsGrid}>
-      <MetricCard 
-        title="Adherencia Semanal" 
-        value={`${data.weeklyAdherence}%`} 
-        icon="📈" 
+      <MetricCard
+        title="Adherencia Semanal"
+        value={`${data.weeklyAdherence}%`}
+        icon="📈"
         color="#27ae60"
       />
-      <MetricCard 
-        title="Recetas Favoritas" 
-        value={data.favoriteRecipes} 
-        icon="❤️" 
+      <MetricCard
+        title="Recetas Favoritas"
+        value={data.favoriteRecipes}
+        icon="❤️"
         color="#e74c3c"
       />
-      <MetricCard 
-        title="Próxima Cita" 
-        value={data.nextAppointment} 
-        icon="📅" 
+      <MetricCard
+        title="Próxima Cita"
+        value={data.nextAppointment}
+        icon="📅"
         color="#3498db"
       />
-      <MetricCard 
-        title="Equivalentes Hoy" 
-        value={data.totalEquivalentsToday} 
-        icon="🥗" 
+      <MetricCard
+        title="Equivalentes Hoy"
+        value={data.totalEquivalentsToday}
+        icon="🥗"
         color="#f39c12"
       />
     </div>
@@ -300,21 +481,68 @@ const PatientDashboard = ({ data, user }) => (
     <div style={styles.quickActions}>
       <h3>🎯 Acciones de Hoy</h3>
       <div style={styles.actionGrid}>
-        <button style={styles.quickActionButton}>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('recordatorio')}
+        >
           <span style={styles.actionIcon}>✅</span>
           Registrar Comida
         </button>
-        <button style={styles.quickActionButton}>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('recipes')}
+        >
           <span style={styles.actionIcon}>⭐</span>
           Calificar Receta
         </button>
-        <button style={styles.quickActionButton}>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('gamificacion')}
+        >
           <span style={styles.actionIcon}>📊</span>
           Ver Progreso
         </button>
-        <button style={styles.quickActionButton}>
-          <span style={styles.actionIcon}>🔄</span>
-          Solicitar Cambio
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('analisis-fotos')}
+        >
+          <span style={styles.actionIcon}>📸</span>
+          Analizar Comida
+        </button>
+      </div>
+    </div>
+
+    {/* Herramientas disponibles para pacientes */}
+    <div style={styles.patientTools}>
+      <h3>🛠️ Mis Herramientas</h3>
+      <div style={styles.actionGrid}>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('analisis-fotos')}
+        >
+          <span style={styles.actionIcon}>📸</span>
+          Análisis de Fotos IA
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('chat-ia')}
+        >
+          <span style={styles.actionIcon}>💬</span>
+          Chat Nutriólogo IA
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('scanner')}
+        >
+          <span style={styles.actionIcon}>📱</span>
+          Escáner NOM-051
+        </button>
+        <button
+          style={styles.quickActionButton}
+          onClick={() => onNavigate && onNavigate('gamificacion')}
+        >
+          <span style={styles.actionIcon}>🏆</span>
+          Gamificación
         </button>
       </div>
     </div>
@@ -340,6 +568,141 @@ const MetricCard = ({ title, value, icon, color }) => (
     <div style={{...styles.metricValue, color}}>{value}</div>
   </div>
 );
+
+// Componente para mostrar citas
+const AppointmentItem = ({ time, patient, type, status }) => {
+  const statusColors = {
+    confirmed: '#27ae60',
+    pending: '#f39c12',
+    cancelled: '#e74c3c'
+  };
+
+  const statusLabels = {
+    confirmed: 'Confirmada',
+    pending: 'Pendiente',
+    cancelled: 'Cancelada'
+  };
+
+  return (
+    <div style={styles.appointmentItem}>
+      <div style={styles.appointmentTime}>{time}</div>
+      <div style={styles.appointmentDetails}>
+        <div style={styles.appointmentPatient}>{patient}</div>
+        <div style={styles.appointmentType}>{type}</div>
+      </div>
+      <div
+        style={{
+          ...styles.appointmentStatus,
+          backgroundColor: statusColors[status],
+        }}
+      >
+        {statusLabels[status]}
+      </div>
+    </div>
+  );
+};
+
+// Componente para alertas de pacientes
+const AlertItem = ({ patient, alert, priority }) => {
+  const priorityColors = {
+    high: '#e74c3c',
+    medium: '#f39c12',
+    low: '#3498db'
+  };
+
+  return (
+    <div style={{
+      ...styles.alertItem,
+      borderLeft: `4px solid ${priorityColors[priority]}`
+    }}>
+      <div style={styles.alertPatient}>
+        <span style={styles.alertIcon}>👤</span>
+        {patient}
+      </div>
+      <div style={styles.alertText}>{alert}</div>
+      <button style={styles.alertButton}>Ver Expediente</button>
+    </div>
+  );
+};
+
+// Componente para tarjetas de roles
+const RoleCard = ({ role, name, users, permissions, color }) => {
+  return (
+    <div style={{...styles.roleCard, borderTop: `4px solid ${color}`}}>
+      <div style={styles.roleHeader}>
+        <h4 style={{...styles.roleName, color}}>{name}</h4>
+        <span style={styles.roleUsers}>{users} usuarios</span>
+      </div>
+      <div style={styles.permissionsList}>
+        <p style={styles.permissionsLabel}>Permisos:</p>
+        {permissions.map((permission, index) => (
+          <div key={index} style={styles.permissionItem}>
+            <span style={styles.permissionIcon}>✓</span>
+            {permission}
+          </div>
+        ))}
+      </div>
+      <button style={{...styles.editRoleButton, backgroundColor: color}}>
+        Editar Rol
+      </button>
+    </div>
+  );
+};
+
+// Componente tabla de vistas por rol
+const ViewsByRoleTable = () => {
+  const views = [
+    { name: 'Dashboard', nutritionist: true, patient: true, admin: true },
+    { name: 'Expediente Clínico', nutritionist: true, patient: false, admin: true },
+    { name: 'Dietas Dinámicas', nutritionist: true, patient: false, admin: true },
+    { name: 'Gestión de Pacientes', nutritionist: true, patient: false, admin: true },
+    { name: 'Alimentos', nutritionist: true, patient: false, admin: true },
+    { name: 'Recetas', nutritionist: true, patient: false, admin: true },
+    { name: 'Equivalencias', nutritionist: true, patient: false, admin: true },
+    { name: 'Análisis de Fotos', nutritionist: true, patient: true, admin: true },
+    { name: 'Chat IA', nutritionist: true, patient: true, admin: true },
+    { name: 'Escáner NOM-051', nutritionist: true, patient: true, admin: true },
+    { name: 'Gamificación', nutritionist: true, patient: true, admin: true },
+    { name: 'Calculadora', nutritionist: true, patient: false, admin: true },
+    { name: 'Panel Administrativo', nutritionist: false, patient: false, admin: true },
+    { name: 'Gestión de Usuarios', nutritionist: false, patient: false, admin: true },
+    { name: 'Roles y Permisos', nutritionist: false, patient: false, admin: true },
+    { name: 'Configurar Vistas', nutritionist: false, patient: false, admin: true },
+    { name: 'Reportes del Sistema', nutritionist: false, patient: false, admin: true },
+    { name: 'Logs del Sistema', nutritionist: false, patient: false, admin: true },
+  ];
+
+  return (
+    <div style={styles.viewsTable}>
+      <div style={styles.tableHeader}>
+        <div style={styles.tableCell}>Vista / Sección</div>
+        <div style={styles.tableCell}>Nutricionista</div>
+        <div style={styles.tableCell}>Paciente</div>
+        <div style={styles.tableCell}>Admin</div>
+      </div>
+      {views.map((view, index) => (
+        <div key={index} style={styles.tableRow}>
+          <div style={styles.tableCell}>{view.name}</div>
+          <div style={styles.tableCell}>
+            <span style={{...styles.accessBadge, backgroundColor: view.nutritionist ? '#27ae60' : '#e74c3c'}}>
+              {view.nutritionist ? '✓' : '✗'}
+            </span>
+          </div>
+          <div style={styles.tableCell}>
+            <span style={{...styles.accessBadge, backgroundColor: view.patient ? '#27ae60' : '#e74c3c'}}>
+              {view.patient ? '✓' : '✗'}
+            </span>
+          </div>
+          <div style={styles.tableCell}>
+            <span style={{...styles.accessBadge, backgroundColor: view.admin ? '#27ae60' : '#e74c3c'}}>
+              {view.admin ? '✓' : '✗'}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // Estilos
 const styles = {
@@ -516,6 +879,271 @@ const styles = {
     fontSize: '14px',
     fontWeight: '500',
     marginTop: '10px',
+  },
+  todaySummary: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  metricsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '15px',
+    marginTop: '15px',
+  },
+  appointmentsSection: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  appointmentsList: {
+    marginTop: '15px',
+    marginBottom: '15px',
+  },
+  appointmentItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '15px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px',
+    marginBottom: '10px',
+    gap: '15px',
+  },
+  appointmentTime: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#2c3e50',
+    minWidth: '80px',
+  },
+  appointmentDetails: {
+    flex: 1,
+  },
+  appointmentPatient: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: '4px',
+  },
+  appointmentType: {
+    fontSize: '13px',
+    color: '#7f8c8d',
+  },
+  appointmentStatus: {
+    padding: '6px 12px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '500',
+    color: 'white',
+  },
+  viewAllButton: {
+    width: '100%',
+    padding: '12px',
+    backgroundColor: '#f8f9fa',
+    border: '2px solid #e9ecef',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#2c3e50',
+    transition: 'all 0.3s ease',
+  },
+  alertsSection: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  alertsList: {
+    marginTop: '15px',
+  },
+  alertItem: {
+    padding: '15px',
+    backgroundColor: '#fff5f5',
+    borderRadius: '8px',
+    marginBottom: '12px',
+    borderLeft: '4px solid #e74c3c',
+  },
+  alertPatient: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  alertIcon: {
+    fontSize: '16px',
+  },
+  alertText: {
+    fontSize: '14px',
+    color: '#7f8c8d',
+    marginBottom: '10px',
+  },
+  alertButton: {
+    padding: '8px 16px',
+    backgroundColor: '#3498db',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: '500',
+    transition: 'background-color 0.3s ease',
+  },
+  monthlyStats: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  systemMetrics: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  rolesSection: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  rolesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: '20px',
+    marginTop: '20px',
+  },
+  roleCard: {
+    backgroundColor: '#f8f9fa',
+    padding: '20px',
+    borderRadius: '10px',
+    borderTop: '4px solid #3498db',
+  },
+  roleHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '15px',
+  },
+  roleName: {
+    fontSize: '18px',
+    fontWeight: '600',
+    margin: 0,
+  },
+  roleUsers: {
+    fontSize: '13px',
+    color: '#7f8c8d',
+    backgroundColor: 'white',
+    padding: '4px 10px',
+    borderRadius: '12px',
+  },
+  permissionsList: {
+    marginBottom: '15px',
+  },
+  permissionsLabel: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#7f8c8d',
+    marginBottom: '8px',
+  },
+  permissionItem: {
+    fontSize: '13px',
+    color: '#2c3e50',
+    padding: '6px 0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  permissionIcon: {
+    color: '#27ae60',
+    fontWeight: 'bold',
+  },
+  editRoleButton: {
+    width: '100%',
+    padding: '10px',
+    backgroundColor: '#3498db',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'opacity 0.3s ease',
+  },
+  viewsSection: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  viewsTable: {
+    marginTop: '20px',
+    overflow: 'auto',
+  },
+  tableHeader: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 1fr 1fr 1fr',
+    backgroundColor: '#2c3e50',
+    color: 'white',
+    padding: '12px',
+    borderRadius: '8px 8px 0 0',
+    fontWeight: '600',
+    fontSize: '14px',
+  },
+  tableRow: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 1fr 1fr 1fr',
+    padding: '12px',
+    borderBottom: '1px solid #e9ecef',
+    alignItems: 'center',
+  },
+  tableCell: {
+    padding: '8px',
+    textAlign: 'center',
+  },
+  accessBadge: {
+    width: '30px',
+    height: '30px',
+    borderRadius: '50%',
+    backgroundColor: '#27ae60',
+    color: 'white',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    fontSize: '14px',
+  },
+  usageStats: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginBottom: '25px',
+  },
+  patientTools: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    marginTop: '25px',
+  },
+  infoBox: {
+    backgroundColor: '#e3f2fd',
+    padding: '15px 20px',
+    borderRadius: '8px',
+    border: '1px solid #90caf9',
+    marginTop: '20px',
   },
 };
 

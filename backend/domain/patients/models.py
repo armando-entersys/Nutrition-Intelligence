@@ -68,6 +68,8 @@ class Patient(SQLModel, table=True):
     meal_plans: List["MealPlan"] = Relationship(back_populates="patient")
     consultations: List["Consultation"] = Relationship(back_populates="patient")
     recipes: List["Recipe"] = Relationship(back_populates="author_patient")
+    laboratory_records: List["LaboratoryData"] = Relationship(back_populates="patient")
+    clinical_files: List["ClinicalFile"] = Relationship(back_populates="patient")
     
     @property
     def current_age(self) -> int:

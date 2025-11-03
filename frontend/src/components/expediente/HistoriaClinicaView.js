@@ -28,6 +28,7 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -214,6 +215,86 @@ const HistoriaClinicaView = ({ paciente }) => {
                 )}
               </Box>
             </Box>
+          </InfoCard>
+        </Grid>
+
+        {/* Cirugías Previas */}
+        <Grid item xs={12} md={6}>
+          <InfoCard icon={<BusinessIcon />} title="Cirugías Previas" color="#FF9800">
+            {historia_clinica.antecedentes_patologicos.cirugias_previas.length > 0 ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>Tipo</strong></TableCell>
+                      <TableCell><strong>Fecha</strong></TableCell>
+                      <TableCell><strong>Hospital</strong></TableCell>
+                      <TableCell><strong>Motivo</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {historia_clinica.antecedentes_patologicos.cirugias_previas.map((cirugia, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{cirugia.tipo}</TableCell>
+                        <TableCell>{new Date(cirugia.fecha).toLocaleDateString('es-MX')}</TableCell>
+                        <TableCell>{cirugia.hospital}</TableCell>
+                        <TableCell>
+                          {cirugia.motivo}
+                          {cirugia.complicaciones && (
+                            <Chip
+                              label="Con complicaciones"
+                              size="small"
+                              color="warning"
+                              sx={{ ml: 1 }}
+                            />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Sin cirugías previas registradas
+              </Typography>
+            )}
+          </InfoCard>
+        </Grid>
+
+        {/* Hospitalizaciones */}
+        <Grid item xs={12} md={6}>
+          <InfoCard icon={<LocalHospitalIcon />} title="Hospitalizaciones" color="#F44336">
+            {historia_clinica.antecedentes_patologicos.hospitalizaciones.length > 0 ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>Razón</strong></TableCell>
+                      <TableCell><strong>Fecha</strong></TableCell>
+                      <TableCell><strong>Duración</strong></TableCell>
+                      <TableCell><strong>Hospital</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {historia_clinica.antecedentes_patologicos.hospitalizaciones.map((hosp, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{hosp.razon}</TableCell>
+                        <TableCell>{new Date(hosp.fecha).toLocaleDateString('es-MX')}</TableCell>
+                        <TableCell>
+                          {hosp.duracion_dias} {hosp.duracion_dias === 1 ? 'día' : 'días'}
+                        </TableCell>
+                        <TableCell>{hosp.hospital}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Sin hospitalizaciones previas registradas
+              </Typography>
+            )}
           </InfoCard>
         </Grid>
 

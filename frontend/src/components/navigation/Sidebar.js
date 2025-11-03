@@ -41,6 +41,12 @@ import {
   Chat as ChatIcon,
   ExpandLess,
   ExpandMore,
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Security as SecurityIcon,
+  ViewModule as ViewModuleIcon,
+  Assignment as AssignmentIcon,
+  BarChart as BarChartIcon,
+  Storage as StorageIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -94,6 +100,20 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
         { id: 'calculator', icon: CalculateIcon, label: 'Calculadora', description: 'Herramientas de cálculo', roles: ['nutritionist', 'admin'], color: theme.palette.warning.main },
       ]
     },
+    {
+      id: 'administration',
+      label: 'Administración',
+      items: [
+        { id: 'admin-users', icon: AdminPanelSettingsIcon, label: 'Usuarios', description: 'Gestionar usuarios', roles: ['admin'], color: '#e74c3c' },
+        { id: 'admin-roles', icon: SecurityIcon, label: 'Roles y Permisos', description: 'Configurar accesos', roles: ['admin'], color: '#9b59b6', badge: 'NEW' },
+        { id: 'admin-views', icon: ViewModuleIcon, label: 'Vistas por Rol', description: 'Configurar vistas', roles: ['admin'], color: '#3498db' },
+        { id: 'admin-reports', icon: BarChartIcon, label: 'Reportes', description: 'Analítica del sistema', roles: ['admin'], color: '#27ae60' },
+        { id: 'admin-logs', icon: AssignmentIcon, label: 'Logs del Sistema', description: 'Auditoría y logs', roles: ['admin'], color: '#f39c12' },
+        { id: 'admin-database', icon: StorageIcon, label: 'Base de Datos', description: 'Mantenimiento BD', roles: ['admin'], color: '#34495e' },
+        { id: 'admin-settings', icon: SettingsIcon, label: 'Configuración', description: 'Ajustes del sistema', roles: ['admin'], color: '#95a5a6' },
+        { id: 'testing-dashboard', icon: AssignmentIcon, label: 'Dashboard de Pruebas', description: 'Sistema de testing E2E', roles: ['admin'], color: '#16a085', badge: 'QA' },
+      ]
+    },
   ];
 
   const roleLabels = {
@@ -103,8 +123,14 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
   };
 
   const handleRoleChange = (newRole) => {
+    console.log('🔄 Sidebar - handleRoleChange called:', {
+      newRole,
+      previousRole: currentRole,
+      timestamp: new Date().toISOString()
+    });
     setCurrentRole(newRole);
     setCurrentView('dashboard');
+    console.log('✅ Sidebar - State update called');
   };
 
   const toggleGroup = (groupId) => {
@@ -589,6 +615,7 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
             keepMounted: true, // Better mobile performance
           }}
           sx={drawerStyles}
+          PaperProps={{ role: "navigation" }}
         >
           {drawerContent}
         </Drawer>
@@ -597,6 +624,7 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
         <Drawer
           variant="permanent"
           sx={drawerStyles}
+          PaperProps={{ role: "navigation" }}
         >
           {drawerContent}
         </Drawer>

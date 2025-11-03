@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config/api';
 
 const RecipeRating = ({ recipeId, currentUser, onRatingUpdate }) => {
   const [ratings, setRatings] = useState([]);
@@ -20,7 +21,7 @@ const RecipeRating = ({ recipeId, currentUser, onRatingUpdate }) => {
 
   const fetchRatings = async () => {
     try {
-      const response = await axios.get(`http://localhost:8001/api/v1/recipes/${recipeId}/ratings`);
+      const response = await axios.get(`${API_BASE_URL}/api/v1/recipes/${recipeId}/ratings`);
       setRatings(response.data);
       
       // Find user's existing rating
@@ -39,7 +40,7 @@ const RecipeRating = ({ recipeId, currentUser, onRatingUpdate }) => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`http://localhost:8001/api/v1/recipes/${recipeId}/rating-stats`);
+      const response = await axios.get(`${API_BASE_URL}/api/v1/recipes/${recipeId}/rating-stats`);
       setStats(response.data);
       setLoading(false);
     } catch (error) {
@@ -57,7 +58,7 @@ const RecipeRating = ({ recipeId, currentUser, onRatingUpdate }) => {
     setSubmitting(true);
     try {
       const response = await axios.post(
-        `http://localhost:8001/api/v1/recipes/${recipeId}/ratings`,
+        `${API_BASE_URL}/api/v1/recipes/${recipeId}/ratings`,
         {
           rating: newRating,
           comment: newComment.trim() || null
@@ -94,7 +95,7 @@ const RecipeRating = ({ recipeId, currentUser, onRatingUpdate }) => {
 
     try {
       await axios.post(
-        `http://localhost:8001/api/v1/recipes/ratings/${ratingId}/helpful`,
+        `${API_BASE_URL}/api/v1/recipes/ratings/${ratingId}/helpful`,
         {},
         {
           headers: {
@@ -117,7 +118,7 @@ const RecipeRating = ({ recipeId, currentUser, onRatingUpdate }) => {
 
     try {
       await axios.delete(
-        `http://localhost:8001/api/v1/recipes/ratings/${ratingId}`,
+        `${API_BASE_URL}/api/v1/recipes/ratings/${ratingId}`,
         {
           headers: {
             Authorization: `Bearer ${currentUser.token}`

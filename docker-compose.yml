@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: nutrition-intelligence-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nutrition_intelligence
+      POSTGRES_USER: nutrition_user
+      POSTGRES_PASSWORD: nutrition_password_dev
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutrition_user -d nutrition_intelligence"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nutrition-network
+
+  # Redis (for caching and sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: nutrition-intelligence-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - nutrition-network
+
+  # PgAdmin (PostgreSQL Management Tool)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nutrition-intelligence-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@nutrition-intelligence.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - nutrition-network
+
+volumes:
+  postgres_data:
+    name: nutrition_intelligence_postgres_data
+  redis_data:
+    name: nutrition_intelligence_redis_data
+  pgadmin_data:
+    name: nutrition_intelligence_pgadmin_data
+
+networks:
+  nutrition-network:
+    name: nutrition-intelligence-network
+    driver: bridge

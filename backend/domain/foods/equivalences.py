@@ -56,7 +56,7 @@ class FoodEquivalence(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
-    food: "Food" = Relationship(back_populates="equivalences")
+    # food: "Food" = Relationship()  # One-way relationship to Food
 
 class EquivalenceGroupStandard(SQLModel, table=True):
     """Estándares nutricionales por grupo de equivalencia"""
