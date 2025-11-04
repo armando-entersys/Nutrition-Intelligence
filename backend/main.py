@@ -13,7 +13,7 @@ from core.config import get_settings
 from core.database import init_db
 from core.logging import LoggingMiddleware, log_success, log_error
 from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp
-from api.routers import auth_new
+from api.routers import auth_new, auth_complete
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +99,7 @@ def create_application() -> FastAPI:
         }
     
     # Include routers
+    app.include_router(auth_complete.router, prefix="/api/v1", tags=["authentication"])  # New complete auth system
     app.include_router(auth_simple.router, prefix="/api/v1/auth", tags=["auth"])
     app.include_router(auth_new.router, prefix="/api/v1/auth-hybrid", tags=["auth-hybrid"])
     app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
