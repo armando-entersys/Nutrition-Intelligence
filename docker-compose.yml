@@ -1,6 +1,45 @@
 version: '3.8'
 
 services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nutrition-intelligence-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://nutrition_user:nutrition_password_dev@postgres:5432/nutrition_intelligence
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+    networks:
+      - nutrition-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nutrition-intelligence-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - nutrition-network
+
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
@@ -62,6 +101,8 @@ services:
       - nutrition-network
 
 volumes:
+  backend_data:
+    name: nutrition_intelligence_backend_data
   postgres_data:
     name: nutrition_intelligence_postgres_data
   redis_data:
