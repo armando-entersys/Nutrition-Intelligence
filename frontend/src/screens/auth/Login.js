@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -29,6 +29,7 @@ import authService from '../../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -87,24 +88,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await authService.login(formData.email, formData.password);
+      await authService.login(formData.email, formData.password);
 
-      // Navigate based on user role
-      const { user } = response;
-
-      switch (user.primary_role) {
-        case 'admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'nutritionist':
-          navigate('/nutritionist/dashboard');
-          break;
-        case 'patient':
-          navigate('/patient/dashboard');
-          break;
-        default:
-          navigate('/dashboard');
-      }
+      // Redirect to the page they tried to access, or to dashboard
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
       setGeneralError(error.message || 'Login failed. Please try again.');
