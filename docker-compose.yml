@@ -25,6 +25,20 @@ services:
       - backend_data:/app/data
     networks:
       - nutrition-network
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.nutrition-backend-http.entrypoints=web"
+      - "traefik.http.routers.nutrition-backend-http.rule=Host(`nutrition-intelligence.scram2k.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.nutrition-backend-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      # HTTPS router
+      - "traefik.http.routers.nutrition-backend.entrypoints=websecure"
+      - "traefik.http.routers.nutrition-backend.rule=Host(`nutrition-intelligence.scram2k.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.nutrition-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nutrition-backend.loadbalancer.server.port=8000"
+      - "traefik.docker.network=traefik-public"
 
   # Frontend
   frontend:
@@ -34,11 +48,24 @@ services:
     container_name: nutrition-intelligence-frontend
     restart: unless-stopped
     ports:
-      - "3003:80"  # Changed from 80:80 to avoid conflict with Traefik
+      - "3003:80"  # Fallback port if Traefik is down
     depends_on:
       - backend
     networks:
       - nutrition-network
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.nutrition-frontend-http.entrypoints=web"
+      - "traefik.http.routers.nutrition-frontend-http.rule=Host(`nutrition-intelligence.scram2k.com`)"
+      - "traefik.http.routers.nutrition-frontend-http.middlewares=redirect-to-https"
+      # HTTPS router
+      - "traefik.http.routers.nutrition-frontend.entrypoints=websecure"
+      - "traefik.http.routers.nutrition-frontend.rule=Host(`nutrition-intelligence.scram2k.com`)"
+      - "traefik.http.routers.nutrition-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nutrition-frontend.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-public"
 
   # PostgreSQL Database
   postgres:
@@ -112,3 +139,5 @@ networks:
   nutrition-network:
     name: nutrition-intelligence-network
     driver: bridge
+  traefik-public:
+    external: true
