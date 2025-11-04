@@ -1,0 +1,10 @@
+{
+  "email": "armando.cortes@entersys.mx",
+  "username": "armandocortes",
+  "password": "Test123456",
+  "confirm_password": "Test123456",
+  "first_name": "Armando",
+  "last_name": "Cortés",
+  "phone": "+52 55 1234 5678",
+  "role": "nutritionist"
+}

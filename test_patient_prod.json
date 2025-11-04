@@ -1,0 +1,11 @@
+{
+  "email": "zero.armando@gmail.com",
+  "username": "zeroarmando",
+  "password": "Test123456",
+  "confirm_password": "Test123456",
+  "first_name": "Zero",
+  "last_name": "Armando",
+  "phone": "+52 55 9876 5432",
+  "role": "patient",
+  "nutritionist_email": "armando.cortes@entersys.mx"
+}

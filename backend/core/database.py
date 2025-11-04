@@ -23,17 +23,23 @@ def init_database():
     global engine, async_engine, SessionLocal, AsyncSessionLocal
     
     settings = get_settings()
-    
-    # Sync engine for migrations
+
+    # Sync engine - force psycopg2 driver
+    sync_database_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
+    if "postgresql+psycopg://" not in sync_database_url:
+        sync_database_url = sync_database_url.replace("postgresql://", "postgresql+psycopg://")
+
     engine = create_engine(
-        settings.database_url,
+        sync_database_url,
         echo=settings.database_echo,
         pool_pre_ping=True,
         pool_recycle=300
     )
-    
+
     # Async engine for API operations
     async_database_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
+    if "postgresql+asyncpg://" not in async_database_url:
+        async_database_url = async_database_url.replace("postgresql+psycopg://", "postgresql+asyncpg://")
     async_engine = create_async_engine(
         async_database_url,
         echo=settings.database_echo,
