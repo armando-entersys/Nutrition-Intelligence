@@ -30,14 +30,14 @@ services:
       - "traefik.enable=true"
       # HTTP to HTTPS redirect for API routes
       - "traefik.http.routers.nutrition-backend-http.entrypoints=web"
-      - "traefik.http.routers.nutrition-backend-http.rule=Host(`nutrition-intelligence.scram2k.com`) && (PathPrefix(`/api`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/openapi.json`))"
-      - "traefik.http.routers.nutrition-backend-http.priority=100"
+      - "traefik.http.routers.nutrition-backend-http.rule=Host(`nutrition-intelligence.scram2k.com`) && (PathPrefix(`/api`) || PathPrefix(`/health`) || Path(`/docs`) || Path(`/openapi.json`) || Path(`/redoc`))"
+      - "traefik.http.routers.nutrition-backend-http.priority=200"
       - "traefik.http.routers.nutrition-backend-http.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       # HTTPS router for API routes
       - "traefik.http.routers.nutrition-backend.entrypoints=websecure"
-      - "traefik.http.routers.nutrition-backend.rule=Host(`nutrition-intelligence.scram2k.com`) && (PathPrefix(`/api`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/openapi.json`))"
-      - "traefik.http.routers.nutrition-backend.priority=100"
+      - "traefik.http.routers.nutrition-backend.rule=Host(`nutrition-intelligence.scram2k.com`) && (PathPrefix(`/api`) || PathPrefix(`/health`) || Path(`/docs`) || Path(`/openapi.json`) || Path(`/redoc`))"
+      - "traefik.http.routers.nutrition-backend.priority=200"
       - "traefik.http.routers.nutrition-backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.nutrition-backend.loadbalancer.server.port=8000"
       - "traefik.docker.network=traefik-public"
