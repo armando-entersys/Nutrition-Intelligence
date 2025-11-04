@@ -48,16 +48,16 @@ const ForgotPassword = () => {
           <LockReset sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
           <Typography variant="h5" gutterBottom>Check Your Email</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            If your email is registered, you will receive password reset instructions shortly.
+            We've sent password reset instructions to your email. Please check your inbox and follow the link to reset your password.
           </Typography>
-          {resetData?.reset_url && (
-            <Alert severity="info" sx={{ mb: 2, textAlign: 'left' }}>
-              <Typography variant="caption" component="div">Development Mode:</Typography>
-              <Link to={resetData.reset_url.replace('/reset-password', '/auth/reset-password')} style={{ wordBreak: 'break-all' }}>
-                Reset Link
-              </Link>
-            </Alert>
-          )}
+          <Alert severity="success" sx={{ mb: 2, textAlign: 'left' }}>
+            <Typography variant="body2">
+              <strong>📧 Email sent successfully!</strong>
+            </Typography>
+            <Typography variant="caption" component="div" sx={{ mt: 1 }}>
+              The reset link will expire in 1 hour for security reasons.
+            </Typography>
+          </Alert>
           <Button component={Link} to="/auth/login" variant="contained" fullWidth>
             Back to Login
           </Button>

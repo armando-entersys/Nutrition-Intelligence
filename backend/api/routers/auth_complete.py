@@ -15,6 +15,7 @@ from core.auth import create_access_token, create_refresh_token
 from domain.auth.models import AuthUser, UserRole, AccountStatus
 from domain.auth.password_reset import PasswordResetToken, TokenStatus
 from core.logging import log_success, log_error
+from services.email_service import email_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -326,17 +327,26 @@ async def forgot_password(
     session.add(reset_token)
     session.commit()
 
-    # TODO: Send email with reset link
-    # For now, return the token in the response (for development only)
-    # In production, this should be sent via email
-    log_success(f"Password reset requested for: {user.email}")
+    # Enviar email de recuperación
+    try:
+        user_name = user.first_name or user.username
+        email_sent = email_service.send_password_reset_email(
+            to_email=user.email,
+            user_name=user_name,
+            reset_token=reset_token.token
+        )
 
-    return {
-        **response_message,
-        "reset_token": reset_token.token,  # Remove this in production
-        "reset_url": f"/reset-password?token={reset_token.token}",  # Remove this in production
-        "expires_at": reset_token.expires_at.isoformat()
-    }
+        if email_sent:
+            log_success(f"Email de recuperación enviado exitosamente a: {user.email}")
+        else:
+            log_error(f"No se pudo enviar el email a: {user.email}")
+
+    except Exception as e:
+        log_error(f"Error al enviar email de recuperación: {str(e)}")
+        # No revelar el error al usuario por seguridad
+
+    # Siempre retornar éxito para prevenir enumeración de emails
+    return response_message
 
 @router.post("/reset-password")
 async def reset_password(
