@@ -21,6 +21,7 @@ class PasswordResetToken(SQLModel, table=True):
     Los tokens expiran después de 1 hora y son de un solo uso
     """
     __tablename__ = "password_reset_tokens"
+    __table_args__ = {'extend_existing': True}
 
     id: Optional[int] = Field(default=None, primary_key=True)
 
