@@ -7,7 +7,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
-from utils.logger import log_info, log_error, log_success
+from core.logging import log_info, log_error, log_success
 
 
 class EmailService:
