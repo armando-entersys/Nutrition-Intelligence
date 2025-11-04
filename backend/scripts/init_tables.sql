@@ -9,22 +9,26 @@ DROP TABLE IF EXISTS auth_users CASCADE;
 CREATE TABLE auth_users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    hashed_password VARCHAR(255) NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     phone VARCHAR(20),
-    primary_role VARCHAR(20) NOT NULL,
-    secondary_roles TEXT,
     account_status VARCHAR(20) DEFAULT 'pending_verification',
     is_email_verified BOOLEAN DEFAULT FALSE,
-    email_verification_token VARCHAR(255),
-    email_verification_sent_at TIMESTAMP,
-    nutritionist_id INTEGER REFERENCES auth_users(id),
-    profile_picture_url VARCHAR(500),
+    is_phone_verified BOOLEAN DEFAULT FALSE,
+    primary_role VARCHAR(20) NOT NULL,
+    secondary_roles JSONB DEFAULT '[]'::jsonb,
+    last_login TIMESTAMP,
+    login_count INTEGER DEFAULT 0,
+    failed_login_attempts INTEGER DEFAULT 0,
+    last_failed_login TIMESTAMP,
+    password_changed_at TIMESTAMP,
+    profile_completed BOOLEAN DEFAULT FALSE,
+    preferences JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP
+    updated_at TIMESTAMP,
+    nutritionist_id INTEGER REFERENCES auth_users(id)
 );
 
 -- Create indexes for auth_users
