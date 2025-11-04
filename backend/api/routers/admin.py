@@ -26,7 +26,7 @@ class UserListResponse:
         self.created_at = user.created_at
 
 @router.get("/users")
-async def list_all_users(
+def list_all_users(
     session: Session = Depends(get_session)
 ):
     """
