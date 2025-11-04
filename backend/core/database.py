@@ -26,8 +26,9 @@ def init_database():
 
     # Sync engine - force psycopg2 driver
     sync_database_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
-    if "postgresql+psycopg://" not in sync_database_url:
-        sync_database_url = sync_database_url.replace("postgresql://", "postgresql+psycopg://")
+    # Use default postgresql:// which uses psycopg2 when available
+    if "postgresql://" not in sync_database_url:
+        sync_database_url = sync_database_url.replace("postgresql+psycopg2://", "postgresql://")
 
     engine = create_engine(
         sync_database_url,
@@ -39,7 +40,7 @@ def init_database():
     # Async engine for API operations
     async_database_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
     if "postgresql+asyncpg://" not in async_database_url:
-        async_database_url = async_database_url.replace("postgresql+psycopg://", "postgresql+asyncpg://")
+        async_database_url = async_database_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
     async_engine = create_async_engine(
         async_database_url,
         echo=settings.database_echo,
