@@ -61,12 +61,10 @@ def init_database():
 async def init_db():
     """Initialize database connection"""
     init_database()
-    
-    # Create tables (in production, use Alembic migrations)
-    if get_settings().environment == "development":
-        async with async_engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
-        logger.info("Database tables created")
+
+    # Tables are created via SQL scripts (backend/scripts/init_tables.sql)
+    # Not using SQLModel.metadata.create_all to avoid duplicate index issues
+    logger.info("Database initialized")
 
 def get_session() -> Session:
     """Get synchronous database session"""
