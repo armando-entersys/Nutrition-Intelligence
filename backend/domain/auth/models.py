@@ -65,7 +65,14 @@ class AuthUser(SQLModel, table=True):
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(default=None)
-    
+
+    # Relación Paciente-Nutriólogo
+    nutritionist_id: Optional[int] = Field(
+        default=None,
+        foreign_key="auth_users.id",
+        description="ID del nutriólogo asignado (solo para pacientes)"
+    )
+
     # Relationships
     user_sessions: List["UserSession"] = Relationship(
         back_populates="user",
@@ -74,6 +81,23 @@ class AuthUser(SQLModel, table=True):
     role_assignments: List["UserRoleAssignment"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"foreign_keys": "[UserRoleAssignment.user_id]"}
+    )
+
+    # Relación nutriólogo-pacientes (un nutriólogo puede tener muchos pacientes)
+    patients: List["AuthUser"] = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[AuthUser.nutritionist_id]",
+            "remote_side": "[AuthUser.id]"
+        }
+    )
+
+    # Relación paciente-nutriólogo (un paciente tiene un nutriólogo)
+    nutritionist: Optional["AuthUser"] = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "[AuthUser.nutritionist_id]",
+            "remote_side": "[AuthUser.id]",
+            "uselist": False
+        }
     )
     
     def set_password(self, password: str) -> None:

@@ -33,6 +33,10 @@ class RegisterRequest(BaseModel):
     last_name: str = Field(..., min_length=1, max_length=100)
     phone: Optional[str] = None
     role: UserRole = Field(default=UserRole.PATIENT)
+    nutritionist_email: Optional[EmailStr] = Field(
+        default=None,
+        description="Email del nutriólogo (requerido para pacientes)"
+    )
 
     @validator('password')
     def validate_password(cls, v):
@@ -59,6 +63,16 @@ class RegisterRequest(BaseModel):
         """Validate username format"""
         if not re.match(r'^[a-zA-Z0-9_-]+$', v):
             raise ValueError('Username can only contain letters, numbers, hyphens and underscores')
+        return v
+
+    @validator('nutritionist_email')
+    def validate_nutritionist_email(cls, v, values):
+        """Validate that patients have a nutritionist email"""
+        role = values.get('role')
+        if role == UserRole.PATIENT and not v:
+            raise ValueError('Los pacientes deben tener un nutriólogo asignado. Por favor proporciona el email de tu nutriólogo.')
+        if role != UserRole.PATIENT and v:
+            raise ValueError('Solo los pacientes pueden tener un nutriólogo asignado')
         return v
 
 class LoginRequest(BaseModel):
@@ -158,6 +172,43 @@ async def register(
             detail="Username already taken"
         )
 
+    # If user is a patient, validate and get nutritionist
+    nutritionist_id = None
+    if request.role == UserRole.PATIENT:
+        if not request.nutritionist_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Los pacientes deben tener un nutriólogo asignado. Por favor proporciona el email de tu nutriólogo."
+            )
+
+        # Find nutritionist by email
+        nutritionist = session.exec(
+            select(AuthUser).where(AuthUser.email == request.nutritionist_email)
+        ).first()
+
+        if not nutritionist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró un nutriólogo con el email: {request.nutritionist_email}"
+            )
+
+        # Verify it's actually a nutritionist
+        if nutritionist.primary_role != UserRole.NUTRITIONIST and UserRole.NUTRITIONIST not in nutritionist.secondary_roles:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El email proporcionado no corresponde a un nutriólogo registrado"
+            )
+
+        # Verify nutritionist account is active
+        if nutritionist.account_status != AccountStatus.ACTIVE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"La cuenta del nutriólogo está {nutritionist.account_status.value}. Por favor contacta a soporte."
+            )
+
+        nutritionist_id = nutritionist.id
+        log_success(f"Paciente será vinculado al nutriólogo: {nutritionist.email}")
+
     # Create new user
     new_user = AuthUser(
         email=request.email,
@@ -166,6 +217,7 @@ async def register(
         last_name=request.last_name,
         phone=request.phone,
         primary_role=request.role,
+        nutritionist_id=nutritionist_id,  # Assign nutritionist if patient
         account_status=AccountStatus.ACTIVE if request.role == UserRole.PATIENT else AccountStatus.PENDING_VERIFICATION,
         is_email_verified=False,
         profile_completed=False
@@ -411,3 +463,50 @@ async def logout():
     - In production, implement token blacklist for enhanced security
     """
     return {"message": "Successfully logged out"}
+
+@router.get("/validate-nutritionist/{email}")
+async def validate_nutritionist_email(
+    email: str,
+    session: Session = Depends(get_session)
+):
+    """
+    Validate if an email belongs to an active nutritionist
+
+    - Used during patient registration
+    - Returns nutritionist information if valid
+    - Returns error if email is not found or user is not a nutritionist
+    """
+    # Find user by email
+    user = session.exec(
+        select(AuthUser).where(AuthUser.email == email)
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Email no encontrado en el sistema"
+        )
+
+    # Check if user is a nutritionist
+    if user.primary_role != UserRole.NUTRITIONIST and UserRole.NUTRITIONIST not in user.secondary_roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Este email no corresponde a un nutriólogo registrado"
+        )
+
+    # Check if account is active
+    if user.account_status != AccountStatus.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"La cuenta del nutriólogo está {user.account_status.value}. Por favor contacta a soporte."
+        )
+
+    return {
+        "valid": True,
+        "nutritionist": {
+            "id": user.id,
+            "name": f"{user.first_name} {user.last_name}",
+            "email": user.email
+        },
+        "message": f"Nutriólogo encontrado: {user.first_name} {user.last_name}"
+    }

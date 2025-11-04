@@ -1,37 +1,112 @@
 /**
  * Register Screen - User registration
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Container, Paper, TextField, Button, Typography, Box, Alert,
   InputAdornment, IconButton, CircularProgress, MenuItem,
-  FormControl, InputLabel, Select, LinearProgress
+  FormControl, InputLabel, Select, LinearProgress, Collapse
 } from '@mui/material';
 import {
-  Visibility, VisibilityOff, PersonAdd, Email, Lock, Person, Phone
+  Visibility, VisibilityOff, PersonAdd, Email, Lock, Person, Phone,
+  CheckCircle, Error as ErrorIcon, LocalHospital
 } from '@mui/icons-material';
+import axios from 'axios';
 import authService from '../../services/authService';
+import { API_ENDPOINTS } from '../../config/api';
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '', username: '', password: '', confirm_password: '',
-    first_name: '', last_name: '', phone: '', role: 'patient'
+    first_name: '', last_name: '', phone: '', role: 'patient',
+    nutritionist_email: ''
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
   const [passwordStrength, setPasswordStrength] = useState(null);
+  const [nutritionistValidation, setNutritionistValidation] = useState({
+    validating: false,
+    valid: null,
+    message: '',
+    nutritionist: null
+  });
+
+  // Validate nutritionist email
+  const validateNutritionistEmail = useCallback(async (email) => {
+    if (!email || !authService.validateEmail(email)) {
+      setNutritionistValidation({
+        validating: false,
+        valid: false,
+        message: 'Por favor ingresa un email válido',
+        nutritionist: null
+      });
+      return;
+    }
+
+    setNutritionistValidation(prev => ({ ...prev, validating: true }));
+
+    try {
+      const response = await axios.get(
+        `${API_ENDPOINTS.AUTH}/validate-nutritionist/${encodeURIComponent(email)}`
+      );
+
+      setNutritionistValidation({
+        validating: false,
+        valid: true,
+        message: response.data.message,
+        nutritionist: response.data.nutritionist
+      });
+    } catch (error) {
+      setNutritionistValidation({
+        validating: false,
+        valid: false,
+        message: error.response?.data?.detail || 'Error al validar el email del nutriólogo',
+        nutritionist: null
+      });
+    }
+  }, []);
+
+  // Debounce nutritionist email validation
+  useEffect(() => {
+    if (formData.role === 'patient' && formData.nutritionist_email) {
+      const timer = setTimeout(() => {
+        validateNutritionistEmail(formData.nutritionist_email);
+      }, 500); // Wait 500ms after user stops typing
+
+      return () => clearTimeout(timer);
+    } else {
+      setNutritionistValidation({
+        validating: false,
+        valid: null,
+        message: '',
+        nutritionist: null
+      });
+    }
+  }, [formData.nutritionist_email, formData.role, validateNutritionistEmail]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     setGeneralError('');
+
     if (name === 'password') {
       setPasswordStrength(authService.getPasswordStrength(value));
+    }
+
+    // Clear nutritionist email if role changes to non-patient
+    if (name === 'role' && value !== 'patient') {
+      setFormData(prev => ({ ...prev, nutritionist_email: '' }));
+      setNutritionistValidation({
+        validating: false,
+        valid: null,
+        message: '',
+        nutritionist: null
+      });
     }
   };
 
@@ -42,6 +117,15 @@ const Register = () => {
     if (!formData.username || formData.username.length < 3) newErrors.username = 'Username must be at least 3 characters';
     if (!formData.first_name) newErrors.first_name = 'First name is required';
     if (!formData.last_name) newErrors.last_name = 'Last name is required';
+
+    // Validate nutritionist email for patients
+    if (formData.role === 'patient') {
+      if (!formData.nutritionist_email) {
+        newErrors.nutritionist_email = 'Nutritionist email is required for patients';
+      } else if (!nutritionistValidation.valid) {
+        newErrors.nutritionist_email = 'Please enter a valid nutritionist email';
+      }
+    }
 
     const passwordValidation = authService.validatePassword(formData.password);
     if (!passwordValidation.isValid) newErrors.password = passwordValidation.errors.join('. ');
@@ -117,6 +201,53 @@ const Register = () => {
                 <MenuItem value="nutritionist">Nutritionist</MenuItem>
               </Select>
             </FormControl>
+
+            {/* Nutritionist Email Field - Only for Patients */}
+            <Collapse in={formData.role === 'patient'}>
+              <TextField
+                margin="dense"
+                required={formData.role === 'patient'}
+                fullWidth
+                label="Nutritionist Email"
+                name="nutritionist_email"
+                type="email"
+                value={formData.nutritionist_email}
+                onChange={handleChange}
+                error={!!errors.nutritionist_email || (nutritionistValidation.valid === false && formData.nutritionist_email)}
+                helperText={
+                  errors.nutritionist_email ||
+                  (formData.nutritionist_email && nutritionistValidation.message) ||
+                  'Enter your nutritionist\'s email address'
+                }
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocalHospital />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {nutritionistValidation.validating && <CircularProgress size={20} />}
+                      {nutritionistValidation.valid === true && (
+                        <CheckCircle sx={{ color: 'success.main' }} />
+                      )}
+                      {nutritionistValidation.valid === false && formData.nutritionist_email && (
+                        <ErrorIcon sx={{ color: 'error.main' }} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              {nutritionistValidation.valid && nutritionistValidation.nutritionist && (
+                <Alert severity="success" sx={{ mt: 1, mb: 1 }}>
+                  <Typography variant="body2">
+                    <strong>Nutritionist Found:</strong> {nutritionistValidation.nutritionist.name}
+                  </Typography>
+                </Alert>
+              )}
+            </Collapse>
+
             <TextField margin="dense" required fullWidth label="Password" name="password"
               type={showPassword ? 'text' : 'password'} value={formData.password}
               onChange={handleChange} error={!!errors.password} helperText={errors.password}
