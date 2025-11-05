@@ -1,5 +1,6 @@
 // API Configuration for Nutrition Intelligence Platform
 // Supports environment variable override or defaults to relative URLs for production
+// Version: 1.0.1 - Fixed production API URL configuration
 
 // Use environment variable if available, otherwise:
 // - Development: use localhost:8000
