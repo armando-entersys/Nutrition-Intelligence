@@ -8,7 +8,7 @@ from typing import List, Optional
 from datetime import date, datetime
 
 from core.database import get_async_session
-from core.security import get_current_user_id
+from core.security import get_current_user_id, get_current_user_role, UserRole
 from domain.patients.models import (
     Patient,
     AnthropometricRecord,
@@ -16,6 +16,7 @@ from domain.patients.models import (
     Gender,
     ActivityLevel
 )
+from domain.auth.models import AuthUser
 from pydantic import BaseModel, Field
 
 router = APIRouter()
@@ -223,10 +224,18 @@ async def update_patient_profile(
 async def get_patient_by_id(
     patient_id: int,
     current_user_id: int = Depends(get_current_user_id),
+    current_user_role: UserRole = Depends(get_current_user_role),
     session: AsyncSession = Depends(get_async_session)
 ):
-    """Get patient by ID (for nutritionists)"""
-    # TODO: Add authorization check - only assigned nutritionist can access
+    """
+    Get patient by ID
+
+    Authorization:
+    - Admins: Can access any patient
+    - Nutritionists: Can only access their assigned patients
+    - Patients: Can only access their own profile
+    """
+    # Get patient
     query = select(Patient).where(Patient.id == patient_id)
     result = await session.exec(query)
     patient = result.first()
@@ -237,7 +246,36 @@ async def get_patient_by_id(
             detail="Patient not found"
         )
 
-    return patient
+    # Authorization checks
+    if current_user_role == UserRole.ADMIN:
+        # Admins can access any patient
+        return patient
+    elif current_user_role == UserRole.NUTRITIONIST:
+        # Nutritionists can only access their assigned patients
+        # Get the auth_user record to find assigned nutritionist
+        user_query = select(AuthUser).where(AuthUser.id == patient.user_id)
+        user_result = await session.exec(user_query)
+        patient_user = user_result.first()
+
+        if not patient_user or patient_user.nutritionist_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this patient's data"
+            )
+        return patient
+    elif current_user_role == UserRole.PATIENT:
+        # Patients can only access their own profile
+        if patient.user_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only access your own patient profile"
+            )
+        return patient
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
 
 
 # ============================================================================
@@ -610,12 +648,59 @@ async def delete_medical_history(
 async def get_patient_anthropometric_records(
     patient_id: int,
     current_user_id: int = Depends(get_current_user_id),
+    current_user_role: UserRole = Depends(get_current_user_role),
     session: AsyncSession = Depends(get_async_session),
     limit: int = Query(default=10, le=100),
     offset: int = Query(default=0, ge=0)
 ):
-    """Get anthropometric records for a patient (for nutritionists)"""
-    # TODO: Add authorization check - only assigned nutritionist can access
+    """
+    Get anthropometric records for a patient
+
+    Authorization:
+    - Admins: Can access any patient's records
+    - Nutritionists: Can only access their assigned patients' records
+    - Patients: Can only access their own records
+    """
+    # Get patient to verify ownership
+    patient_query = select(Patient).where(Patient.id == patient_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    # Authorization checks
+    if current_user_role == UserRole.ADMIN:
+        # Admins can access any patient's data
+        pass
+    elif current_user_role == UserRole.NUTRITIONIST:
+        # Nutritionists can only access their assigned patients
+        user_query = select(AuthUser).where(AuthUser.id == patient.user_id)
+        user_result = await session.exec(user_query)
+        patient_user = user_result.first()
+
+        if not patient_user or patient_user.nutritionist_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this patient's data"
+            )
+    elif current_user_role == UserRole.PATIENT:
+        # Patients can only access their own records
+        if patient.user_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only access your own anthropometric records"
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
+
+    # Get records
     query = (
         select(AnthropometricRecord)
         .where(AnthropometricRecord.patient_id == patient_id)
@@ -633,10 +718,57 @@ async def get_patient_anthropometric_records(
 async def get_patient_medical_history(
     patient_id: int,
     current_user_id: int = Depends(get_current_user_id),
+    current_user_role: UserRole = Depends(get_current_user_role),
     session: AsyncSession = Depends(get_async_session)
 ):
-    """Get medical history for a patient (for nutritionists)"""
-    # TODO: Add authorization check - only assigned nutritionist can access
+    """
+    Get medical history for a patient
+
+    Authorization:
+    - Admins: Can access any patient's medical history
+    - Nutritionists: Can only access their assigned patients' medical history
+    - Patients: Can only access their own medical history
+    """
+    # Get patient to verify ownership
+    patient_query = select(Patient).where(Patient.id == patient_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    # Authorization checks
+    if current_user_role == UserRole.ADMIN:
+        # Admins can access any patient's data
+        pass
+    elif current_user_role == UserRole.NUTRITIONIST:
+        # Nutritionists can only access their assigned patients
+        user_query = select(AuthUser).where(AuthUser.id == patient.user_id)
+        user_result = await session.exec(user_query)
+        patient_user = user_result.first()
+
+        if not patient_user or patient_user.nutritionist_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this patient's data"
+            )
+    elif current_user_role == UserRole.PATIENT:
+        # Patients can only access their own medical history
+        if patient.user_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only access your own medical history"
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
+
+    # Get medical history
     query = select(MedicalHistory).where(MedicalHistory.patient_id == patient_id)
     result = await session.exec(query)
     history = result.first()

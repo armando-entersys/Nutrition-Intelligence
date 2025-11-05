@@ -7,7 +7,8 @@ from typing import List, Optional
 from datetime import datetime
 
 from core.database import get_session
-from domain.auth.models import AuthUser, UserRole, AccountStatus
+from core.security import require_admin, UserRole
+from domain.auth.models import AuthUser, AccountStatus
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -27,12 +28,15 @@ class UserListResponse:
 
 @router.get("/users")
 def list_all_users(
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    _: UserRole = Depends(require_admin)
 ):
     """
-    List all registered users
+    List all registered users (Admin only)
 
     Returns user information including role and nutritionist assignments
+
+    Authorization: Admin only
     """
     users = session.exec(
         select(AuthUser).order_by(AuthUser.created_at.desc())
