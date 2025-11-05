@@ -1,12 +1,16 @@
 // API Configuration for Nutrition Intelligence Platform
-// Supports environment variable override or defaults to relative URLs for production
-// Version: 1.0.1 - Fixed production API URL configuration
+// Version: 1.0.2 - Explicit environment configuration
+//
+// REACT_APP_API_BASE_URL values:
+// - Development: 'http://localhost:8000' (set in .env.development or package.json)
+// - Production: '' (empty string - set in Dockerfile, uses relative URLs via Nginx proxy)
+//
+// Empty string means the frontend makes requests to '/api/v1/...' which Nginx
+// proxies to the backend container
 
-// Use environment variable if available, otherwise:
-// - Development: use localhost:8000
-// - Production: use empty string (relative URLs) to let Nginx proxy handle routing
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : '');
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL !== undefined
+  ? process.env.REACT_APP_API_BASE_URL
+  : (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : '');
 
 // API Endpoints
 export const API_ENDPOINTS = {

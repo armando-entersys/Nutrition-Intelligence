@@ -12,6 +12,10 @@ RUN npm install --legacy-peer-deps --force
 # Copy source code
 COPY . .
 
+# Set environment variables for React build
+ENV NODE_ENV=production
+ENV REACT_APP_API_BASE_URL=""
+
 # Build the app
 RUN npm run build
 
