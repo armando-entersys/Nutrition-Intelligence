@@ -293,13 +293,8 @@ async def login(
         )
 
     # Generate tokens
-    token_data = {
-        "sub": str(user.id),
-        "email": user.email,
-        "role": user.primary_role.value
-    }
-    access_token = create_access_token(token_data)
-    refresh_token = create_refresh_token(token_data)
+    access_token = create_access_token(user)
+    refresh_token = create_refresh_token(user)
 
     # Update login stats
     user.last_login = datetime.utcnow()
