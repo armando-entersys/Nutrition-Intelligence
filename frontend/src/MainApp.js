@@ -718,6 +718,7 @@ function MainApp() {
             currentRole={currentRole}
             setCurrentRole={setCurrentRole}
             userRoles={userRoles}
+            currentUser={currentUser}
             isMobile={isMobile}
             mobileDrawerOpen={mobileDrawerOpen}
             setMobileDrawerOpen={setMobileDrawerOpen}

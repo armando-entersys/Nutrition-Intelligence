@@ -53,9 +53,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 const MotionBox = motion(Box);
 const MotionListItemButton = motion(ListItemButton);
 
-const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, currentRole, setCurrentRole, userRoles, isMobile, mobileDrawerOpen, setMobileDrawerOpen }) => {
+const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, currentRole, setCurrentRole, userRoles, isMobile, mobileDrawerOpen, setMobileDrawerOpen, currentUser }) => {
   const theme = useTheme();
   const [expandedGroups, setExpandedGroups] = useState({ tools: true, features: true });
+
+  // Get user's full name
+  const getUserDisplayName = () => {
+    if (!currentUser) return 'Usuario';
+
+    const firstName = currentUser.first_name || '';
+    const lastName = currentUser.last_name || '';
+
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    }
+
+    return currentUser.username || currentUser.email || 'Usuario';
+  };
+
+  const userDisplayName = getUserDisplayName();
 
   const navigationGroups = [
     {
@@ -489,7 +505,7 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
               </Avatar>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <Typography variant="body2" fontWeight={600} color="white" sx={{ lineHeight: 1.2 }} noWrap>
-                  Dra. Sara Gallegos
+                  {userDisplayName}
                 </Typography>
                 <Chip
                   label={roleLabels[currentRole]?.label || 'Nutricionista'}
@@ -544,7 +560,7 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
       {/* Collapsed mode - Footer */}
       {isCollapsed && !isMobile && (
         <Box sx={{ p: 1, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
-          <Tooltip title="Dra. Sara Gallegos" placement="right" arrow>
+          <Tooltip title={userDisplayName} placement="right" arrow>
             <Avatar
               sx={{
                 width: 48,
