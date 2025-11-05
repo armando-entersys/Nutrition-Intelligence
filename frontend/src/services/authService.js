@@ -4,8 +4,8 @@
  */
 
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const AUTH_ENDPOINT = `${API_BASE_URL}/api/v1/auth`;
 
 // Token storage keys
