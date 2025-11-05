@@ -60,10 +60,35 @@ function MainApp() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
-  const [currentRole, setCurrentRole] = useState('nutritionist'); // nutritionist, patient, admin
-
   // Get current user from token
   const currentUser = authService.getCurrentUser();
+
+  // Determine user's available roles from their data
+  const getUserRoles = () => {
+    if (!currentUser) return ['nutritionist']; // Default fallback
+
+    const roles = [];
+
+    // Add primary role
+    if (currentUser.primary_role) {
+      roles.push(currentUser.primary_role.toLowerCase());
+    }
+
+    // Add secondary roles if they exist
+    if (currentUser.secondary_roles && Array.isArray(currentUser.secondary_roles)) {
+      currentUser.secondary_roles.forEach(role => {
+        const roleLower = role.toLowerCase();
+        if (!roles.includes(roleLower)) {
+          roles.push(roleLower);
+        }
+      });
+    }
+
+    return roles.length > 0 ? roles : ['nutritionist']; // Default fallback
+  };
+
+  const userRoles = getUserRoles();
+  const [currentRole, setCurrentRole] = useState(userRoles[0]); // Set to user's primary role
 
   // Debug: Monitor currentRole changes
   useEffect(() => {
@@ -692,7 +717,7 @@ function MainApp() {
             toggleSidebar={toggleSidebar}
             currentRole={currentRole}
             setCurrentRole={setCurrentRole}
-            userRoles={['nutritionist', 'patient', 'admin']}
+            userRoles={userRoles}
             isMobile={isMobile}
             mobileDrawerOpen={mobileDrawerOpen}
             setMobileDrawerOpen={setMobileDrawerOpen}
