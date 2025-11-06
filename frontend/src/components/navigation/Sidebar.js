@@ -47,6 +47,7 @@ import {
   Assignment as AssignmentIcon,
   BarChart as BarChartIcon,
   Storage as StorageIcon,
+  EventNote as EventNoteIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -112,6 +113,7 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
       id: 'other',
       label: 'Otras Herramientas',
       items: [
+        { id: 'recordatorio', icon: EventNoteIcon, label: 'Recordatorio 24 Horas', description: 'Registro de comidas', roles: ['nutritionist', 'patient', 'admin'], color: '#00BCD4' },
         { id: 'gamificacion', icon: EmojiEventsIcon, label: 'Gamificación', description: 'Logros y recompensas', roles: ['nutritionist', 'patient', 'admin'], color: '#FFD700' },
         { id: 'calculator', icon: CalculateIcon, label: 'Calculadora', description: 'Herramientas de cálculo', roles: ['nutritionist', 'admin'], color: theme.palette.warning.main },
       ]
