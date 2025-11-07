@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import authService from '../../services/authService';
 
 const RoleBasedDashboard = ({ currentRole: propCurrentRole, onNavigate }) => {
   const [user, setUser] = useState(null);
@@ -15,32 +16,42 @@ const RoleBasedDashboard = ({ currentRole: propCurrentRole, onNavigate }) => {
     propCurrentRole,
     userPrimaryRole: user?.primary_role,
     finalCurrentRole: currentRole,
+    user: user,
     timestamp: new Date().toISOString()
   });
 
-  // Simulated user data (en una implementación real vendría del contexto de auth)
-  const mockUser = {
-    id: 1,
-    name: "Dra. Sara Gallegos",
-    email: "contacto@saragallegos.com",
-    website: "https://saragallegos.com/",
-    primary_role: "nutritionist",
-    secondary_roles: ["patient"],
-    all_roles: ["nutritionist", "patient"],
-    permissions: [
-      "create_meal_plans", "calculate_nutrition", "manage_patients",
-      "view_equivalences", "create_recipes", "assign_diets",
-      "view_meal_plan", "track_consumption", "rate_recipes", "view_progress"
-    ]
-  };
-
   useEffect(() => {
-    // Simular carga de datos de usuario
-    setTimeout(() => {
-      setUser(mockUser);
-      setIsAuthenticated(true);
+    // Load real user data from authentication service
+    try {
+      const currentUser = authService.getCurrentUser();
+      const isAuth = authService.isAuthenticated();
+
+      if (currentUser && isAuth) {
+        // Format user data to match expected structure
+        const formattedUser = {
+          id: currentUser.id,
+          name: `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.username || currentUser.email,
+          email: currentUser.email,
+          username: currentUser.username,
+          primary_role: currentUser.primary_role,
+          secondary_roles: currentUser.secondary_roles || [],
+          all_roles: currentUser.all_roles || [currentUser.primary_role],
+          permissions: currentUser.permissions || []
+        };
+
+        setUser(formattedUser);
+        setIsAuthenticated(true);
+        console.log('✅ Loaded real user data:', formattedUser);
+      } else {
+        console.warn('⚠️ No authenticated user found');
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('❌ Error loading user data:', error);
+      setIsAuthenticated(false);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   }, []);
 
   useEffect(() => {

@@ -81,10 +81,28 @@ const AnalizadorFotosMejorado = () => {
   };
 
   const handleCameraCapture = async () => {
+    // Detectar si es Android/móvil
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // En Android/móvil, usar el input file con capture (más compatible)
+    if (isMobile) {
+      console.log('📱 Dispositivo móvil detectado - usando input file con capture');
+      fileInputRef.current?.click();
+      return;
+    }
+
+    // En desktop, intentar usar getUserMedia
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
+      // Constraints mejorados para mejor compatibilidad
+      const constraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -94,7 +112,9 @@ const AnalizadorFotosMejorado = () => {
       setShowCameraDialog(true);
     } catch (error) {
       console.error('Error accessing camera:', error);
-      alert('No se pudo acceder a la cámara. Por favor, verifica los permisos.');
+      // Fallback a input file si getUserMedia falla
+      console.log('📷 getUserMedia falló - fallback a input file');
+      fileInputRef.current?.click();
     }
   };
 
@@ -293,6 +313,7 @@ const AnalizadorFotosMejorado = () => {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       style={{ display: 'none' }}
                       onChange={handleFileSelect}
                     />
