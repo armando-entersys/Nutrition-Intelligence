@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config/api';
+import patientsService from '../../services/patientsService';
 import MultiStepForm from '../common/MultiStepForm';
 import FormField from '../common/FormField';
 
@@ -43,111 +44,21 @@ const PatientsBrowser = () => {
   }, []);
 
   const fetchPatients = async () => {
+    console.log('📊 Cargando lista de pacientes...');
     setLoading(true);
     try {
-      // Mock patients data
-      const mockPatients = [
-        {
-          id: 1,
-          name: 'María González',
-          email: 'maria.gonzalez@example.com',
-          phone: '+34 612 345 678',
-          birth_date: '1985-03-15',
-          gender: 'F',
-          height_cm: 165,
-          weight_kg: 68,
-          activity_level: 'MODERATE',
-          medical_conditions: 'Diabetes tipo 2',
-          allergies: 'Ninguna',
-          dietary_preferences: 'Vegetariana',
-          bmi: 25.0,
-          created_at: '2024-01-15',
-          last_visit: '2024-10-20',
-          nutritional_plan: {
-            id: 1,
-            goal: 'WEIGHT_LOSS',
-            target_calories: 1800,
-            target_protein_g: 90,
-            target_carbs_g: 180,
-            target_fat_g: 60,
-            duration_weeks: 12,
-            progress: 45
-          },
-          measurements: [
-            { date: '2024-10-01', weight_kg: 70, bmi: 25.7 },
-            { date: '2024-10-15', weight_kg: 68.5, bmi: 25.2 },
-            { date: '2024-10-27', weight_kg: 68, bmi: 25.0 }
-          ]
-        },
-        {
-          id: 2,
-          name: 'Carlos Rodríguez',
-          email: 'carlos.rodriguez@example.com',
-          phone: '+34 623 456 789',
-          birth_date: '1990-07-22',
-          gender: 'M',
-          height_cm: 178,
-          weight_kg: 85,
-          activity_level: 'ACTIVE',
-          medical_conditions: 'Ninguna',
-          allergies: 'Frutos secos',
-          dietary_preferences: 'Sin restricciones',
-          bmi: 26.8,
-          created_at: '2024-02-10',
-          last_visit: '2024-10-25',
-          nutritional_plan: {
-            id: 2,
-            goal: 'MUSCLE_GAIN',
-            target_calories: 2800,
-            target_protein_g: 170,
-            target_carbs_g: 300,
-            target_fat_g: 85,
-            duration_weeks: 16,
-            progress: 60
-          },
-          measurements: [
-            { date: '2024-09-15', weight_kg: 82, bmi: 25.9 },
-            { date: '2024-10-01', weight_kg: 84, bmi: 26.5 },
-            { date: '2024-10-25', weight_kg: 85, bmi: 26.8 }
-          ]
-        },
-        {
-          id: 3,
-          name: 'Ana Martínez',
-          email: 'ana.martinez@example.com',
-          phone: '+34 634 567 890',
-          birth_date: '1978-11-08',
-          gender: 'F',
-          height_cm: 160,
-          weight_kg: 62,
-          activity_level: 'LIGHT',
-          medical_conditions: 'Hipertensión',
-          allergies: 'Lactosa',
-          dietary_preferences: 'Baja en sodio',
-          bmi: 24.2,
-          created_at: '2024-03-20',
-          last_visit: '2024-10-22',
-          nutritional_plan: {
-            id: 3,
-            goal: 'MAINTENANCE',
-            target_calories: 1900,
-            target_protein_g: 75,
-            target_carbs_g: 200,
-            target_fat_g: 65,
-            duration_weeks: 8,
-            progress: 30
-          },
-          measurements: [
-            { date: '2024-09-20', weight_kg: 63, bmi: 24.6 },
-            { date: '2024-10-05', weight_kg: 62.5, bmi: 24.4 },
-            { date: '2024-10-22', weight_kg: 62, bmi: 24.2 }
-          ]
-        }
-      ];
-      setPatients(mockPatients);
+      const patientsData = await patientsService.getPatients();
+      console.log(`✅ ${patientsData.length} pacientes cargados`);
+
+      // Mostrar advertencia si se están usando datos por defecto
+      if (patientsData.length > 0 && patientsData[0]._isDefault) {
+        console.warn('⚠️ Using default patient data - API endpoint not implemented yet');
+      }
+
+      setPatients(patientsData);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching patients:', error);
+      console.error('❌ Error fetching patients:', error);
       setLoading(false);
     }
   };
@@ -234,62 +145,64 @@ const PatientsBrowser = () => {
 
   const handleSaveNew = async () => {
     try {
-      const bmi = calculateBMI(parseFloat(formData.weight_kg), parseFloat(formData.height_cm));
-      const newPatient = {
-        id: patients.length + 1,
+      console.log('➕ Creando nuevo paciente...');
+
+      const patientData = {
         ...formData,
         weight_kg: parseFloat(formData.weight_kg),
-        height_cm: parseFloat(formData.height_cm),
-        bmi: parseFloat(bmi),
-        created_at: new Date().toISOString().split('T')[0],
-        last_visit: new Date().toISOString().split('T')[0],
-        measurements: [{
-          date: new Date().toISOString().split('T')[0],
-          weight_kg: parseFloat(formData.weight_kg),
-          bmi: parseFloat(bmi)
-        }]
+        height_cm: parseFloat(formData.height_cm)
       };
+
+      const newPatient = await patientsService.createPatient(patientData);
+      console.log('✅ Paciente creado:', newPatient);
 
       setPatients(prev => [...prev, newPatient]);
       setSelectedPatient(newPatient);
       setShowAddForm(false);
       alert('Paciente agregado exitosamente');
     } catch (error) {
-      console.error('Error adding patient:', error);
-      alert('Error al agregar paciente');
+      console.error('❌ Error adding patient:', error);
+      alert(`Error al agregar paciente: ${error.message}`);
     }
   };
 
   const handleSaveEdit = async () => {
     try {
-      const bmi = calculateBMI(parseFloat(formData.weight_kg), parseFloat(formData.height_cm));
-      const updatedPatient = {
-        ...selectedPatient,
+      console.log('✏️ Actualizando paciente...');
+
+      const patientData = {
         ...formData,
         weight_kg: parseFloat(formData.weight_kg),
-        height_cm: parseFloat(formData.height_cm),
-        bmi: parseFloat(bmi)
+        height_cm: parseFloat(formData.height_cm)
       };
+
+      const updatedPatient = await patientsService.updatePatient(selectedPatient.id, patientData);
+      console.log('✅ Paciente actualizado:', updatedPatient);
 
       setPatients(prev => prev.map(p => p.id === selectedPatient.id ? updatedPatient : p));
       setSelectedPatient(updatedPatient);
       setShowEditForm(false);
       alert('Paciente actualizado exitosamente');
     } catch (error) {
-      console.error('Error updating patient:', error);
-      alert('Error al actualizar paciente');
+      console.error('❌ Error updating patient:', error);
+      alert(`Error al actualizar paciente: ${error.message}`);
     }
   };
 
   const handleDelete = async () => {
     if (selectedPatient && window.confirm(`¿Estás seguro de eliminar al paciente ${selectedPatient.name}?`)) {
       try {
+        console.log('🗑️ Eliminando paciente...');
+
+        await patientsService.deletePatient(selectedPatient.id);
+        console.log('✅ Paciente eliminado');
+
         setPatients(prev => prev.filter(p => p.id !== selectedPatient.id));
         setSelectedPatient(null);
         alert('Paciente eliminado exitosamente');
       } catch (error) {
-        console.error('Error deleting patient:', error);
-        alert('Error al eliminar paciente');
+        console.error('❌ Error deleting patient:', error);
+        alert(`Error al eliminar paciente: ${error.message}`);
       }
     }
   };
@@ -309,29 +222,37 @@ const PatientsBrowser = () => {
     setShowEditForm(false);
   };
 
-  const handleSavePlan = () => {
+  const handleSavePlan = async () => {
     if (selectedPatient) {
-      const newPlan = {
-        id: (selectedPatient.nutritional_plan?.id || 0) + 1,
-        ...planFormData,
-        target_calories: parseFloat(planFormData.target_calories),
-        target_protein_g: parseFloat(planFormData.target_protein_g),
-        target_carbs_g: parseFloat(planFormData.target_carbs_g),
-        target_fat_g: parseFloat(planFormData.target_fat_g),
-        duration_weeks: parseInt(planFormData.duration_weeks),
-        progress: 0,
-        created_at: new Date().toISOString()
-      };
+      try {
+        console.log('🎯 Asignando plan nutricional...');
 
-      const updatedPatient = {
-        ...selectedPatient,
-        nutritional_plan: newPlan
-      };
+        const planData = {
+          goal: planFormData.goal,
+          target_calories: parseFloat(planFormData.target_calories),
+          target_protein_g: parseFloat(planFormData.target_protein_g),
+          target_carbs_g: parseFloat(planFormData.target_carbs_g),
+          target_fat_g: parseFloat(planFormData.target_fat_g),
+          duration_weeks: parseInt(planFormData.duration_weeks),
+          notes: planFormData.notes
+        };
 
-      setPatients(prev => prev.map(p => p.id === selectedPatient.id ? updatedPatient : p));
-      setSelectedPatient(updatedPatient);
-      setShowPlanForm(false);
-      alert('Plan nutricional asignado exitosamente');
+        const newPlan = await patientsService.assignNutritionalPlan(selectedPatient.id, planData);
+        console.log('✅ Plan nutricional asignado:', newPlan);
+
+        const updatedPatient = {
+          ...selectedPatient,
+          nutritional_plan: newPlan
+        };
+
+        setPatients(prev => prev.map(p => p.id === selectedPatient.id ? updatedPatient : p));
+        setSelectedPatient(updatedPatient);
+        setShowPlanForm(false);
+        alert('Plan nutricional asignado exitosamente');
+      } catch (error) {
+        console.error('❌ Error asignando plan:', error);
+        alert(`Error al asignar plan: ${error.message}`);
+      }
     }
   };
 
