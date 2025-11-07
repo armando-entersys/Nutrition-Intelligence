@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import authService from '../../services/authService';
+import dashboardService from '../../services/dashboardService';
 
 const RoleBasedDashboard = ({ currentRole: propCurrentRole, onNavigate }) => {
   const [user, setUser] = useState(null);
@@ -62,35 +63,42 @@ const RoleBasedDashboard = ({ currentRole: propCurrentRole, onNavigate }) => {
   }, [currentRole]);
 
   const loadDashboardData = async (role) => {
-    // Simular carga de datos específicos por rol
-    const data = {
-      admin: {
-        totalUsers: 234,
-        activeNutritionists: 45,
-        activePatients: 189,
-        systemHealth: "Excellent",
-        monthlyCalculations: 1250,
-        dailyLogins: 67
-      },
-      nutritionist: {
-        activePatients: 23,
-        weeklyPlansCreated: 8,
-        pendingReviews: 5,
-        avgPatientSatisfaction: 4.7,
-        thisWeekConsultations: 12,
-        completedPlans: 156
-      },
-      patient: {
-        currentPlan: "Plan de Mantenimiento - Semana 3",
-        todayProgress: 78,
-        weeklyAdherence: 85,
-        favoriteRecipes: 12,
-        nextAppointment: "2025-07-25",
-        totalEquivalentsToday: 24
-      }
-    };
+    try {
+      console.log(`📊 Loading dashboard data for role: ${role}`);
 
-    setDashboardData(data[role] || {});
+      // Llamar al servicio de dashboard para obtener estadísticas dinámicas
+      const stats = await dashboardService.getDashboardStats(role);
+
+      console.log(`✅ Dashboard stats loaded:`, stats);
+
+      // Si es nutricionista, también cargar citas y alertas
+      if (role === 'nutritionist') {
+        const [appointments, alerts] = await Promise.all([
+          dashboardService.getUpcomingAppointments(),
+          dashboardService.getPatientAlerts()
+        ]);
+
+        setDashboardData({
+          ...stats,
+          appointments: appointments,
+          alerts: alerts
+        });
+      } else {
+        setDashboardData(stats);
+      }
+
+      // Mostrar mensaje si se están usando datos por defecto
+      if (stats._isDefault) {
+        console.warn(`⚠️ Using default data for ${role} - API endpoints not implemented yet`);
+      }
+
+    } catch (error) {
+      console.error(`❌ Error loading dashboard data for ${role}:`, error);
+
+      // En caso de error, usar datos por defecto
+      const defaultData = dashboardService.getDefaultStats(role);
+      setDashboardData(defaultData);
+    }
   };
 
   const hasPermission = (permission) => {
