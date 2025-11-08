@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -20,6 +20,7 @@ import {
   ListItemText,
   ListItemIcon,
   LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -42,6 +43,7 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PACIENTES_MOCK } from '../../data/pacientesMock';
+import patientsService from '../../services/patientsService';
 
 // Componentes individuales
 import DatosGeneralesView from './DatosGeneralesView';
@@ -52,9 +54,51 @@ import HabitosView from './HabitosView';
 import ActividadFisicaView from './ActividadFisicaView';
 import DatosLaboratorioView from './DatosLaboratorioView';
 
-const ExpedienteClinico = () => {
-  const [selectedPatient, setSelectedPatient] = useState(PACIENTES_MOCK[0]);
+const ExpedienteClinico = ({ patientId }) => {
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentTab, setCurrentTab] = useState(0);
+
+  // Fetch patient data on mount or when patientId changes
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (patientId) {
+          // Fetch specific patient by ID
+          const patient = await patientsService.getPatient(patientId);
+          if (patient) {
+            setSelectedPatient(patient);
+          } else {
+            setError('Paciente no encontrado');
+            // Fallback to mock data
+            setSelectedPatient(PACIENTES_MOCK[0]);
+          }
+        } else {
+          // No specific patient ID - fetch all patients and use first one
+          const patients = await patientsService.getPatients();
+          if (patients && patients.length > 0) {
+            setSelectedPatient(patients[0]);
+          } else {
+            // Fallback to mock data
+            setSelectedPatient(PACIENTES_MOCK[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching patient data:', err);
+        setError('Error al cargar datos del paciente');
+        // Fallback to mock data
+        setSelectedPatient(PACIENTES_MOCK[0]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatientData();
+  }, [patientId]);
 
   // Tabs del expediente
   const tabs = [
@@ -99,7 +143,43 @@ const ExpedienteClinico = () => {
     return { score: Math.round(promedioRiesgo), nivel, color };
   };
 
-  const riesgoGeneral = getRiesgoGeneral();
+  const riesgoGeneral = selectedPatient ? getRiesgoGeneral() : { score: 0, nivel: 'bajo', color: 'success' };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={60} sx={{ color: '#006847', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
+            Cargando expediente clínico...
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  // Show error state with fallback message
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          {error} - Mostrando datos de ejemplo
+        </Alert>
+      </Container>
+    );
+  }
+
+  // If no patient data, show message
+  if (!selectedPatient) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="info">
+          No hay datos de paciente disponibles
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
