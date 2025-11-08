@@ -12,7 +12,7 @@ import uuid
 from core.config import get_settings
 from core.database import init_db
 from core.logging import LoggingMiddleware, log_success, log_error
-from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin
+from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications
 from api.routers import auth_new, auth_complete
 
 logger = logging.getLogger(__name__)
@@ -126,6 +126,9 @@ def create_application() -> FastAPI:
 
     # Admin router
     app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
+
+    # Notifications router
+    app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 
     return app
 
