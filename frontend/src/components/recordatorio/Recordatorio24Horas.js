@@ -31,6 +31,7 @@ import {
   InputAdornment,
   Stack,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -46,8 +47,7 @@ import {
   CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
-import { API_BASE_URL } from '../../config/api';
+import foodsService from '../../services/foodsService';
 
 // Tiempos de comida
 const MEAL_TIMES = {
@@ -76,6 +76,7 @@ const Recordatorio24Horas = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedFood, setSelectedFood] = useState(null);
   const [portionSize, setPortionSize] = useState(1);
+  const [searching, setSearching] = useState(false);
 
   // Estados de análisis
   const [dailySummary, setDailySummary] = useState({
@@ -103,34 +104,32 @@ const Recordatorio24Horas = () => {
   const searchFoods = async (query) => {
     if (query.length < 2) {
       setSearchResults([]);
+      setSearching(false);
       return;
     }
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/foods/search`, {
-        params: { q: query, limit: 20 }
-      });
-      setSearchResults(response.data);
+      setSearching(true);
+
+      // Buscar alimentos usando el servicio
+      const results = await foodsService.searchFoods(query, { limit: 20 });
+
+      // Si no hay resultados desde la API, usar datos por defecto
+      if (results.length === 0) {
+        console.log('No results from API, using default foods');
+        const defaultResults = foodsService.getDefaultFoods(query);
+        setSearchResults(defaultResults);
+      } else {
+        setSearchResults(results);
+      }
     } catch (error) {
       console.error('Error searching foods:', error);
-      // Fallback a datos mock si el backend no está disponible
-      setSearchResults(getMockFoods(query));
+      // Fallback a datos por defecto si hay error
+      const defaultResults = foodsService.getDefaultFoods(query);
+      setSearchResults(defaultResults);
+    } finally {
+      setSearching(false);
     }
-  };
-
-  // Mock data para desarrollo
-  const getMockFoods = (query) => {
-    const mockFoods = [
-      { id: 1, name: 'Tortilla de maíz', serving_size: 30, calories_per_serving: 64, protein_g: 1.5, carbs_g: 13.8, fat_g: 0.9, fiber_g: 1.5 },
-      { id: 2, name: 'Frijoles negros cocidos', serving_size: 90, calories_per_serving: 114, protein_g: 7.6, carbs_g: 20.4, fat_g: 0.5, fiber_g: 7.5 },
-      { id: 3, name: 'Aguacate hass', serving_size: 50, calories_per_serving: 80, protein_g: 1.0, carbs_g: 4.3, fat_g: 7.3, fiber_g: 3.4 },
-      { id: 4, name: 'Pechuga de pollo sin piel', serving_size: 100, calories_per_serving: 165, protein_g: 31.0, carbs_g: 0, fat_g: 3.6, fiber_g: 0 },
-      { id: 5, name: 'Arroz integral cocido', serving_size: 150, calories_per_serving: 165, protein_g: 3.5, carbs_g: 34.2, fat_g: 1.5, fiber_g: 2.8 },
-    ];
-
-    return mockFoods.filter(food =>
-      food.name.toLowerCase().includes(query.toLowerCase())
-    );
   };
 
   useEffect(() => {
@@ -563,8 +562,15 @@ const Recordatorio24Horas = () => {
 
           {searchQuery.length < 2 ? (
             <Alert severity="info">Escribe al menos 2 caracteres para buscar</Alert>
+          ) : searching ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+              <CircularProgress size={40} sx={{ color: '#667eea' }} />
+              <Typography variant="body1" sx={{ ml: 2, color: 'text.secondary' }}>
+                Buscando alimentos...
+              </Typography>
+            </Box>
           ) : searchResults.length === 0 ? (
-            <Alert severity="warning">No se encontraron resultados</Alert>
+            <Alert severity="warning">No se encontraron resultados para "{searchQuery}"</Alert>
           ) : (
             <List>
               {searchResults.map((food) => (
