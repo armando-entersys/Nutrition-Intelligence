@@ -338,7 +338,12 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
           status="confirmed"
         />
       </div>
-      <button style={styles.viewAllButton}>Ver Agenda Completa</button>
+      <button
+        style={styles.viewAllButton}
+        onClick={() => onNavigate && onNavigate('appointments')}
+      >
+        Ver Agenda Completa
+      </button>
     </div>
 
     {/* Pacientes que requieren atención */}
@@ -349,16 +354,22 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
           patient="Carlos Ramírez"
           alert="Adherencia baja (45%) - última semana"
           priority="high"
+          patientId={2}
+          onNavigate={onNavigate}
         />
         <AlertItem
           patient="Laura Torres"
           alert="Recordatorio 24h vencido (2 días)"
           priority="medium"
+          patientId={4}
+          onNavigate={onNavigate}
         />
         <AlertItem
           patient="Pedro Sánchez"
           alert="Signos vitales fuera de rango"
           priority="high"
+          patientId={5}
+          onNavigate={onNavigate}
         />
       </div>
     </div>
@@ -448,7 +459,12 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
       <div style={styles.hybridSection}>
         <h3>🔄 Vista Personal</h3>
         <p>Tienes acceso a tu propia vista como paciente.</p>
-        <button style={styles.hybridButton}>Ver Mi Plan Personal</button>
+        <button
+          style={styles.hybridButton}
+          onClick={() => onNavigate && onNavigate('switch-role/patient')}
+        >
+          Ver Mi Plan Personal
+        </button>
       </div>
     )}
   </div>
@@ -571,7 +587,12 @@ const PatientDashboard = ({ data, user, onNavigate }) => (
       <div style={styles.hybridSection}>
         <h3>👨‍⚕️ Acceso Profesional</h3>
         <p>Como nutricionista, puedes acceder a las herramientas profesionales para gestionar otros pacientes.</p>
-        <button style={styles.hybridButton}>Ir a Vista Profesional</button>
+        <button
+          style={styles.hybridButton}
+          onClick={() => onNavigate && onNavigate('switch-role/nutritionist')}
+        >
+          Ir a Vista Profesional
+        </button>
       </div>
     )}
   </div>
@@ -622,11 +643,19 @@ const AppointmentItem = ({ time, patient, type, status }) => {
 };
 
 // Componente para alertas de pacientes
-const AlertItem = ({ patient, alert, priority }) => {
+const AlertItem = ({ patient, alert, priority, patientId, onNavigate }) => {
   const priorityColors = {
     high: '#e74c3c',
     medium: '#f39c12',
     low: '#3498db'
+  };
+
+  const handleViewPatient = () => {
+    if (onNavigate && patientId) {
+      onNavigate(`patient-detail/${patientId}`);
+    } else if (onNavigate) {
+      onNavigate('patients');
+    }
   };
 
   return (
@@ -639,7 +668,12 @@ const AlertItem = ({ patient, alert, priority }) => {
         {patient}
       </div>
       <div style={styles.alertText}>{alert}</div>
-      <button style={styles.alertButton}>Ver Expediente</button>
+      <button
+        style={styles.alertButton}
+        onClick={handleViewPatient}
+      >
+        Ver Expediente
+      </button>
     </div>
   );
 };
