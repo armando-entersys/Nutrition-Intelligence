@@ -1,51 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
+import notificationsService from '../../services/notificationsService';
 
 const NotificationsPanel = ({ onClose, onNavigate }) => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'info',
-      title: 'Nuevo paciente asignado',
-      message: 'María González ha sido asignada a tu lista',
-      time: 'Hace 5 minutos',
-      read: false,
-      icon: '👤',
-      action: { type: 'navigate', target: 'patients' }
-    },
-    {
-      id: 2,
-      type: 'warning',
-      title: 'Plan nutricional próximo a vencer',
-      message: 'El plan de Carlos Rodríguez vence en 3 días',
-      time: 'Hace 1 hora',
-      read: false,
-      icon: '⏰',
-      action: { type: 'navigate', target: 'patients' }
-    },
-    {
-      id: 3,
-      type: 'success',
-      title: 'Receta guardada',
-      message: 'Tu nueva receta "Ensalada César" se guardó correctamente',
-      time: 'Hace 2 horas',
-      read: true,
-      icon: '✅',
-      action: { type: 'navigate', target: 'recipes' }
-    },
-    {
-      id: 4,
-      type: 'info',
-      title: 'Actualización del sistema',
-      message: 'Nueva versión disponible con mejoras de rendimiento',
-      time: 'Ayer',
-      read: true,
-      icon: '🔄',
-      action: { type: 'navigate', target: 'dashboard' }
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const panelRef = useRef(null);
 
+  // Fetch notifications on component mount
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const data = await notificationsService.getNotifications();
+        setNotifications(data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  // Handle click outside to close panel
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
@@ -57,22 +36,46 @@ const NotificationsPanel = ({ onClose, onNavigate }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
-  const markAsRead = (id) => {
+  const markAsRead = async (id) => {
+    // Update UI immediately for better UX
     setNotifications(prev =>
       prev.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
       )
     );
+
+    // Call API in background
+    try {
+      await notificationsService.markAsRead(id);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    // Update UI immediately for better UX
     setNotifications(prev =>
       prev.map(notif => ({ ...notif, read: true }))
     );
+
+    // Call API in background
+    try {
+      await notificationsService.markAllAsRead();
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
-  const deleteNotification = (id) => {
+  const deleteNotification = async (id) => {
+    // Update UI immediately for better UX
     setNotifications(prev => prev.filter(notif => notif.id !== id));
+
+    // Call API in background
+    try {
+      await notificationsService.deleteNotification(id);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
   };
 
   const handleNotificationClick = (notification) => {
@@ -128,7 +131,12 @@ const NotificationsPanel = ({ onClose, onNavigate }) => {
       </div>
 
       <div style={styles.notificationsList}>
-        {notifications.length === 0 ? (
+        {loading ? (
+          <div style={styles.loadingState}>
+            <div style={styles.spinner}></div>
+            <p style={styles.loadingText}>Cargando notificaciones...</p>
+          </div>
+        ) : notifications.length === 0 ? (
           <div style={styles.emptyState}>
             <span style={styles.emptyIcon}>🔔</span>
             <p style={styles.emptyText}>No hay notificaciones</p>
@@ -345,6 +353,24 @@ const styles = {
     color: '#95a5a6',
     fontSize: '14px',
   },
+  loadingState: {
+    padding: '60px 20px',
+    textAlign: 'center',
+  },
+  spinner: {
+    width: '40px',
+    height: '40px',
+    margin: '0 auto 16px',
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #3498db',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+  loadingText: {
+    color: '#7f8c8d',
+    fontSize: '14px',
+    margin: 0,
+  },
 };
 
 // Agregar animación al head
@@ -360,6 +386,11 @@ if (typeof document !== 'undefined') {
         opacity: 1;
         transform: translateY(0);
       }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .notification-item:hover .delete-button {
