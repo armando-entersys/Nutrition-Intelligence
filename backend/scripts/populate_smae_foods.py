@@ -248,29 +248,20 @@ def create_food_from_data(food_data: dict) -> Food:
 def populate_database():
     """Pobla la base de datos con los alimentos SMAE"""
 
-    # Leer archivo de alimentos
-    frontend_path = Path(__file__).parent.parent.parent / 'frontend' / 'src' / 'data' / 'alimentosMexicanos.js'
+    # Leer archivo de alimentos desde backend/data
+    data_path = Path(__file__).parent.parent / 'data' / 'alimentosMexicanos.js'
 
-    print(f"Leyendo alimentos desde: {frontend_path}")
-    print(f"Path absoluto: {frontend_path.absolute()}")
-    print(f"Existe: {frontend_path.exists()}")
+    print(f"Leyendo alimentos desde: {data_path}")
+    print(f"Path absoluto: {data_path.absolute()}")
+    print(f"Existe: {data_path.exists()}")
 
-    if not frontend_path.exists():
-        print(f"ERROR: No se encontró el archivo {frontend_path}")
-        print(f"Buscando en path alternativo...")
-        # Try alternative path for Docker environment
-        alt_path = Path('/app') / 'frontend' / 'src' / 'data' / 'alimentosMexicanos.js'
-        print(f"Intentando: {alt_path}")
-        if alt_path.exists():
-            frontend_path = alt_path
-            print(f"✓ Encontrado en: {frontend_path}")
-        else:
-            print(f"ERROR: No se encontró el archivo en ninguna ubicación")
-            return
+    if not data_path.exists():
+        print(f"ERROR: No se encontró el archivo {data_path}")
+        return
 
     # Parsear archivo
     print("Parseando archivo JS...")
-    foods_data = extract_foods_manually(open(frontend_path, 'r', encoding='utf-8').read())
+    foods_data = extract_foods_manually(open(data_path, 'r', encoding='utf-8').read())
 
     print(f"Se encontraron {len(foods_data)} alimentos")
 
