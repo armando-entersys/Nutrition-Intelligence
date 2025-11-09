@@ -9,8 +9,9 @@ from datetime import datetime
 
 from core.database import get_async_session
 from core.security import get_current_user_id, get_current_user_role, UserRole
-from domain.foods.models import Food, FoodStatus, FoodCategory
+from domain.foods.models import Food, FoodStatus, FoodCategory, FavoriteFood
 from schemas.foods import FoodCreate, FoodUpdate, FoodResponse, FoodSearchParams
+from sqlalchemy import func
 
 router = APIRouter()
 
@@ -232,15 +233,155 @@ async def get_search_suggestions(
     session: AsyncSession = Depends(get_async_session)
 ):
     """Get food search suggestions"""
-    
+
     query = select(Food.name).where(
         and_(
             Food.status == FoodStatus.APPROVED,
             Food.name.ilike(f"%{q}%")
         )
     ).limit(limit)
-    
+
     result = await session.execute(query)
     suggestions = result.scalars().all()
-    
+
     return {"suggestions": suggestions}
+
+
+# ============================================================================
+# FAVORITE FOODS ENDPOINTS
+# ============================================================================
+
+@router.post("/favorites/{food_id}")
+async def add_to_favorites(
+    food_id: int,
+    notes: Optional[str] = None,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Add food to user's favorites"""
+
+    # Check if food exists
+    food = await session.get(Food, food_id)
+    if not food:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food not found"
+        )
+
+    # Check if already favorited
+    existing_query = select(FavoriteFood).where(
+        and_(
+            FavoriteFood.user_id == current_user_id,
+            FavoriteFood.food_id == food_id
+        )
+    )
+    result = await session.execute(existing_query)
+    existing = result.scalar_one_or_none()
+
+    if existing:
+        # Update notes if provided
+        if notes is not None:
+            existing.notes = notes
+            await session.commit()
+        return {
+            "message": "Food already in favorites",
+            "is_new": False,
+            "favorite_id": existing.id
+        }
+
+    # Create new favorite
+    favorite = FavoriteFood(
+        user_id=current_user_id,
+        food_id=food_id,
+        notes=notes
+    )
+
+    session.add(favorite)
+    await session.commit()
+    await session.refresh(favorite)
+
+    return {
+        "message": "Food added to favorites",
+        "is_new": True,
+        "favorite_id": favorite.id
+    }
+
+
+@router.delete("/favorites/{food_id}")
+async def remove_from_favorites(
+    food_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Remove food from user's favorites"""
+
+    # Find the favorite
+    query = select(FavoriteFood).where(
+        and_(
+            FavoriteFood.user_id == current_user_id,
+            FavoriteFood.food_id == food_id
+        )
+    )
+    result = await session.execute(query)
+    favorite = result.scalar_one_or_none()
+
+    if not favorite:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food not in favorites"
+        )
+
+    await session.delete(favorite)
+    await session.commit()
+
+    return {"message": "Food removed from favorites"}
+
+
+@router.get("/favorites", response_model=List[FoodResponse])
+async def get_user_favorites(
+    limit: int = Query(50, le=100),
+    offset: int = Query(0),
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get user's favorite foods"""
+
+    # Query favorites with food details
+    query = (
+        select(Food)
+        .join(FavoriteFood, Food.id == FavoriteFood.food_id)
+        .where(FavoriteFood.user_id == current_user_id)
+        .order_by(FavoriteFood.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+
+    result = await session.execute(query)
+    foods = result.scalars().all()
+
+    return foods
+
+
+@router.get("/{food_id}/is-favorite")
+async def check_is_favorite(
+    food_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Check if a food is in user's favorites"""
+
+    query = select(FavoriteFood).where(
+        and_(
+            FavoriteFood.user_id == current_user_id,
+            FavoriteFood.food_id == food_id
+        )
+    )
+    result = await session.execute(query)
+    favorite = result.scalar_one_or_none()
+
+    return {
+        "is_favorite": favorite is not None,
+        "favorite_id": favorite.id if favorite else None,
+        "notes": favorite.notes if favorite else None,
+        "created_at": favorite.created_at if favorite else None
+    }
