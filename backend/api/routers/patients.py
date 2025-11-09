@@ -780,3 +780,181 @@ async def get_patient_medical_history(
         )
 
     return history
+
+
+# ============================================================================
+# COMPLETE PATIENT RECORD - Expediente Completo con Progreso
+# ============================================================================
+
+class PatientCompleteRecordResponse(BaseModel):
+    """Complete patient record with progress data - Digital Clinical Record"""
+    patient: Patient
+    user_info: Dict[str, Any] = {}
+    latest_record: Optional[AnthropometricRecord] = None
+    records_count: int = 0
+    medical_history: Optional[MedicalHistory] = None
+    progress_summary: Dict[str, Any] = {}
+    active_meal_plans_count: int = 0
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+@router.get("/{patient_id}/complete-record", response_model=PatientCompleteRecordResponse)
+async def get_complete_patient_record(
+    patient_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    current_user_role: UserRole = Depends(get_current_user_role),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Get complete patient record including profile, latest measurements,
+    medical history, and progress summary.
+
+    This is a comprehensive endpoint for the "Digital Clinical Record" view.
+
+    Authorization:
+    - Admins: Can access any patient's complete record
+    - Nutritionists: Can only access their assigned patients' complete records
+    - Patients: Can only access their own complete record
+    """
+    # Get patient
+    patient_query = select(Patient).where(Patient.id == patient_id)
+    patient_result = await session.exec(patient_query)
+    patient = patient_result.first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    # Authorization checks
+    if current_user_role == UserRole.PATIENT:
+        # Patients can only access their own record
+        if patient.user_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Patients can only access their own record"
+            )
+    elif current_user_role == UserRole.NUTRITIONIST:
+        # Nutritionists can only access their assigned patients
+        # Get user to check nutritionist_id
+        user_query = select(AuthUser).where(AuthUser.id == patient.user_id)
+        user_result = await session.exec(user_query)
+        user = user_result.first()
+
+        if not user or user.nutritionist_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Nutritionists can only access their assigned patients"
+            )
+    # Admins have full access - no additional checks needed
+
+    # Get user information
+    user_query = select(AuthUser).where(AuthUser.id == patient.user_id)
+    user_result = await session.exec(user_query)
+    user = user_result.first()
+
+    user_info = {}
+    if user:
+        user_info = {
+            "email": user.email,
+            "username": user.username,
+            "full_name": user.full_name,
+            "phone": user.phone,
+            "role": user.role.value if user.role else None
+        }
+
+    # Get latest anthropometric record
+    latest_record_query = (
+        select(AnthropometricRecord)
+        .where(AnthropometricRecord.patient_id == patient_id)
+        .order_by(AnthropometricRecord.measurement_date.desc())
+        .limit(1)
+    )
+    latest_record_result = await session.exec(latest_record_query)
+    latest_record = latest_record_result.first()
+
+    # Count total anthropometric records
+    records_count_query = (
+        select(func.count())
+        .select_from(AnthropometricRecord)
+        .where(AnthropometricRecord.patient_id == patient_id)
+    )
+    records_count_result = await session.exec(records_count_query)
+    records_count = records_count_result.one()
+
+    # Get medical history
+    history_query = select(MedicalHistory).where(MedicalHistory.patient_id == patient_id)
+    history_result = await session.exec(history_query)
+    medical_history = history_result.first()
+
+    # Calculate progress summary (last 30 days)
+    from datetime import datetime, timedelta
+
+    thirty_days_ago = datetime.utcnow().date() - timedelta(days=30)
+    progress_records_query = (
+        select(AnthropometricRecord)
+        .where(AnthropometricRecord.patient_id == patient_id)
+        .where(AnthropometricRecord.measurement_date >= thirty_days_ago)
+        .order_by(AnthropometricRecord.measurement_date.asc())
+    )
+    progress_records_result = await session.exec(progress_records_query)
+    progress_records = progress_records_result.all()
+
+    progress_summary = {
+        "period_days": 30,
+        "records_count": len(progress_records),
+        "has_progress": len(progress_records) >= 2
+    }
+
+    if len(progress_records) >= 2:
+        first_record = progress_records[0]
+        last_record = progress_records[-1]
+
+        # Weight change
+        if first_record.weight_kg and last_record.weight_kg:
+            weight_change = last_record.weight_kg - first_record.weight_kg
+            weight_change_pct = (weight_change / first_record.weight_kg) * 100
+
+            progress_summary.update({
+                "initial_weight": first_record.weight_kg,
+                "current_weight": last_record.weight_kg,
+                "weight_change": weight_change,
+                "weight_change_percentage": round(weight_change_pct, 2),
+                "weight_trend": "stable" if abs(weight_change) < 0.5 else ("decreasing" if weight_change < 0 else "increasing")
+            })
+
+        # BMI change
+        if first_record.bmi and last_record.bmi:
+            bmi_change = last_record.bmi - first_record.bmi
+
+            progress_summary.update({
+                "initial_bmi": first_record.bmi,
+                "current_bmi": last_record.bmi,
+                "bmi_change": round(bmi_change, 2),
+                "bmi_trend": "stable" if abs(bmi_change) < 0.5 else ("decreasing" if bmi_change < 0 else "increasing")
+            })
+
+    # Count active meal plans
+    from domain.recipes.models import MealPlan
+
+    active_meal_plans_query = (
+        select(func.count())
+        .select_from(MealPlan)
+        .where(MealPlan.patient_id == patient_id)
+        .where(MealPlan.is_active == True)
+    )
+    active_meal_plans_result = await session.exec(active_meal_plans_query)
+    active_meal_plans_count = active_meal_plans_result.one()
+
+    return PatientCompleteRecordResponse(
+        patient=patient,
+        user_info=user_info,
+        latest_record=latest_record,
+        records_count=records_count,
+        medical_history=medical_history,
+        progress_summary=progress_summary,
+        active_meal_plans_count=active_meal_plans_count
+    )
