@@ -184,3 +184,21 @@ class NutritionalGoal(SQLModel, table=True):
     notes: Optional[str] = Field(default=None, max_length=1000)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = Field(default=None)
+
+
+class FavoriteFood(SQLModel, table=True):
+    """User favorite foods - Many-to-Many relationship"""
+    __tablename__ = "favorite_foods"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="auth_users.id", index=True)
+    food_id: int = Field(foreign_key="foods.id", index=True)
+
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    notes: Optional[str] = Field(default=None, max_length=500)  # Optional user notes about why they like this food
+
+    # Composite unique constraint: un usuario solo puede marcar un alimento como favorito una vez
+    # This will be enforced at the database level via migration
+    class Config:
+        unique_together = [('user_id', 'food_id')]
