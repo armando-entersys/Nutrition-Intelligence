@@ -11,24 +11,25 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 # Mapeo de categorías SMAE a categorías del sistema
+# IMPORTANTE: Los valores del enum en PostgreSQL son UPPERCASE
 CATEGORY_MAP = {
-    'cereales_sin_grasa': 'cereals',
-    'cereales_con_grasa': 'cereals',
-    'leguminosas': 'legumes',
-    'verduras': 'vegetables',
-    'frutas': 'fruits',
-    'leche_descremada': 'dairy',
-    'leche_semidescremada': 'dairy',
-    'leche_entera': 'dairy',
-    'carnes_muy_bajo_aporte': 'animal_products',
-    'carnes_bajo_aporte': 'animal_products',
-    'carnes_moderado_aporte': 'animal_products',
-    'carnes_alto_aporte': 'animal_products',
-    'grasas_sin_proteina': 'fats',
-    'grasas_con_proteina': 'fats',
-    'azucares_sin_grasa': 'sugars',
-    'azucares_con_grasa': 'sugars',
-    'bebida_libre': 'beverages'
+    'cereales_sin_grasa': 'CEREALS',
+    'cereales_con_grasa': 'CEREALS',
+    'leguminosas': 'LEGUMES',
+    'verduras': 'VEGETABLES',
+    'frutas': 'FRUITS',
+    'leche_descremada': 'DAIRY',
+    'leche_semidescremada': 'DAIRY',
+    'leche_entera': 'DAIRY',
+    'carnes_muy_bajo_aporte': 'ANIMAL_PRODUCTS',
+    'carnes_bajo_aporte': 'ANIMAL_PRODUCTS',
+    'carnes_moderado_aporte': 'ANIMAL_PRODUCTS',
+    'carnes_alto_aporte': 'ANIMAL_PRODUCTS',
+    'grasas_sin_proteina': 'FATS',
+    'grasas_con_proteina': 'FATS',
+    'azucares_sin_grasa': 'SUGARS',
+    'azucares_con_grasa': 'SUGARS',
+    'bebida_libre': 'BEVERAGES'
 }
 
 def extract_foods_manually(content: str):
@@ -152,7 +153,7 @@ def populate_database():
 
                 # Mapear categoría
                 categoria_smae = food_data.get('categoria_equivalente', '').replace('CATEGORIAS_EQUIVALENTES.', '')
-                categoria = CATEGORY_MAP.get(categoria_smae, 'cereals')
+                categoria = CATEGORY_MAP.get(categoria_smae, 'CEREALS')  # Default to CEREALS (uppercase)
 
                 # Extraer tamaño de porción
                 cantidad_porcion = food_data.get('cantidad_porcion', '100g')
