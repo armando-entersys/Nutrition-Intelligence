@@ -385,3 +385,129 @@ async def check_is_favorite(
         "notes": favorite.notes if favorite else None,
         "created_at": favorite.created_at if favorite else None
     }
+
+
+# ============================================================================
+# STATISTICS ENDPOINTS
+# ============================================================================
+
+@router.get("/statistics/top-favorites")
+async def get_top_favorite_foods(
+    limit: int = Query(10, le=50),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get most favorited foods across all users"""
+
+    # Count favorites per food
+    query = (
+        select(
+            Food,
+            func.count(FavoriteFood.id).label('favorite_count')
+        )
+        .join(FavoriteFood, Food.id == FavoriteFood.food_id)
+        .where(Food.status == FoodStatus.APPROVED)
+        .group_by(Food.id)
+        .order_by(func.count(FavoriteFood.id).desc())
+        .limit(limit)
+    )
+
+    result = await session.execute(query)
+    rows = result.all()
+
+    return [
+        {
+            "food": row[0],
+            "favorite_count": row[1]
+        }
+        for row in rows
+    ]
+
+
+@router.get("/statistics/by-category")
+async def get_statistics_by_category(
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get food statistics grouped by category"""
+
+    # Get statistics per category
+    query = (
+        select(
+            Food.category,
+            func.count(Food.id).label('total_foods'),
+            func.avg(Food.calories_per_serving).label('avg_calories'),
+            func.avg(Food.protein_g).label('avg_protein'),
+            func.avg(Food.carbs_g).label('avg_carbs'),
+            func.avg(Food.fat_g).label('avg_fat'),
+            func.count(FavoriteFood.id).label('total_favorites')
+        )
+        .outerjoin(FavoriteFood, Food.id == FavoriteFood.food_id)
+        .where(Food.status == FoodStatus.APPROVED)
+        .group_by(Food.category)
+        .order_by(Food.category)
+    )
+
+    result = await session.execute(query)
+    rows = result.all()
+
+    return [
+        {
+            "category": row[0],
+            "total_foods": row[1],
+            "avg_calories": round(float(row[2]) if row[2] else 0, 2),
+            "avg_protein_g": round(float(row[3]) if row[3] else 0, 2),
+            "avg_carbs_g": round(float(row[4]) if row[4] else 0, 2),
+            "avg_fat_g": round(float(row[5]) if row[5] else 0, 2),
+            "total_favorites": row[6] if row[6] else 0
+        }
+        for row in rows
+    ]
+
+
+@router.get("/statistics/user-summary")
+async def get_user_food_summary(
+    current_user_id: int = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Get summary of user's food interactions"""
+
+    # Count user's favorites
+    favorites_query = select(func.count(FavoriteFood.id)).where(
+        FavoriteFood.user_id == current_user_id
+    )
+    favorites_result = await session.execute(favorites_query)
+    total_favorites = favorites_result.scalar() or 0
+
+    # Get category distribution of favorites
+    category_query = (
+        select(
+            Food.category,
+            func.count(FavoriteFood.id).label('count')
+        )
+        .join(FavoriteFood, Food.id == FavoriteFood.food_id)
+        .where(FavoriteFood.user_id == current_user_id)
+        .group_by(Food.category)
+        .order_by(func.count(FavoriteFood.id).desc())
+    )
+    category_result = await session.execute(category_query)
+    category_distribution = [
+        {"category": row[0], "count": row[1]}
+        for row in category_result.all()
+    ]
+
+    # Get most recent favorites
+    recent_query = (
+        select(Food)
+        .join(FavoriteFood, Food.id == FavoriteFood.food_id)
+        .where(FavoriteFood.user_id == current_user_id)
+        .order_by(FavoriteFood.created_at.desc())
+        .limit(5)
+    )
+    recent_result = await session.execute(recent_query)
+    recent_favorites = recent_result.scalars().all()
+
+    return {
+        "total_favorites": total_favorites,
+        "category_distribution": category_distribution,
+        "recent_favorites": recent_favorites,
+        "top_category": category_distribution[0]["category"] if category_distribution else None
+    }
