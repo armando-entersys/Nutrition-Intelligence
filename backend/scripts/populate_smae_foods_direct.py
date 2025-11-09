@@ -189,7 +189,7 @@ def populate_database():
                 """
 
                 cursor.execute(insert_query, (
-                    name, categoria, categoria_smae, 'grams', serving_size,
+                    name, categoria, categoria_smae, 'GRAMS', serving_size,
                     food_data.get('calorias', 0),
                     food_data.get('proteina_g', 0),
                     food_data.get('carbohidratos_g', 0),
