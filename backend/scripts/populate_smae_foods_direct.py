@@ -204,7 +204,7 @@ def populate_database():
                     dietary_flags,
                     food_data.get('descripcion', ''),
                     'SMAE (Sistema Mexicano de Alimentos Equivalentes)',
-                    'approved',
+                    'APPROVED',
                     json.dumps([name]),
                 ))
 
