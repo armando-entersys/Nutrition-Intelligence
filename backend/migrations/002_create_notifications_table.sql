@@ -59,8 +59,8 @@ CREATE TABLE notifications (
     action_url VARCHAR(500),
     action_label VARCHAR(100),
 
-    -- Metadata
-    metadata JSONB,
+    -- Metadata (renamed to meta_data to avoid SQLAlchemy reserved keyword)
+    meta_data JSONB,
 
     -- Related entities
     related_entity_type VARCHAR(50),
@@ -124,7 +124,7 @@ COMMENT ON COLUMN notifications.status IS 'Estado de la notificación (unread, r
 COMMENT ON COLUMN notifications.action IS 'Payload JSON de la acción (ej: {type: "navigate", target: "appointments"})';
 COMMENT ON COLUMN notifications.action_url IS 'URL a la que navegar cuando se hace clic';
 COMMENT ON COLUMN notifications.action_label IS 'Etiqueta del botón de acción';
-COMMENT ON COLUMN notifications.metadata IS 'Metadatos adicionales en formato JSON';
+COMMENT ON COLUMN notifications.meta_data IS 'Metadatos adicionales en formato JSON';
 COMMENT ON COLUMN notifications.related_entity_type IS 'Tipo de entidad relacionada (patient, meal_plan, appointment, etc.)';
 COMMENT ON COLUMN notifications.related_entity_id IS 'ID de la entidad relacionada';
 COMMENT ON COLUMN notifications.scheduled_for IS 'Fecha/hora para mostrar la notificación (notificaciones programadas)';

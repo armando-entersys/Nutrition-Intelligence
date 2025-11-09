@@ -67,8 +67,8 @@ class Notification(SQLModel, table=True):
     action_url: Optional[str] = Field(default=None, max_length=500, description="URL to navigate to")
     action_label: Optional[str] = Field(default=None, max_length=100, description="Action button label")
 
-    # Metadata
-    metadata: Optional[Dict[str, Any]] = Field(
+    # Metadata (renamed from 'metadata' to avoid SQLAlchemy reserved keyword conflict)
+    meta_data: Optional[Dict[str, Any]] = Field(
         default=None,
         sa_column=Column(JSON),
         description="Additional metadata for the notification"
