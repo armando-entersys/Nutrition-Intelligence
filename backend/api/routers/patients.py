@@ -4,7 +4,7 @@ Patient endpoints - Expediente Clínico Digital CRUD
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import date, datetime
 
 from core.database import get_async_session
