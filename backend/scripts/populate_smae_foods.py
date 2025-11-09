@@ -252,10 +252,21 @@ def populate_database():
     frontend_path = Path(__file__).parent.parent.parent / 'frontend' / 'src' / 'data' / 'alimentosMexicanos.js'
 
     print(f"Leyendo alimentos desde: {frontend_path}")
+    print(f"Path absoluto: {frontend_path.absolute()}")
+    print(f"Existe: {frontend_path.exists()}")
 
     if not frontend_path.exists():
         print(f"ERROR: No se encontró el archivo {frontend_path}")
-        return
+        print(f"Buscando en path alternativo...")
+        # Try alternative path for Docker environment
+        alt_path = Path('/app') / 'frontend' / 'src' / 'data' / 'alimentosMexicanos.js'
+        print(f"Intentando: {alt_path}")
+        if alt_path.exists():
+            frontend_path = alt_path
+            print(f"✓ Encontrado en: {frontend_path}")
+        else:
+            print(f"ERROR: No se encontró el archivo en ninguna ubicación")
+            return
 
     # Parsear archivo
     print("Parseando archivo JS...")
@@ -263,11 +274,14 @@ def populate_database():
 
     print(f"Se encontraron {len(foods_data)} alimentos")
 
-    # Conectar a base de datos SQLite directamente
-    backend_path = Path(__file__).parent.parent
-    db_path = backend_path / 'nutrition_intelligence.db'
-    db_url = f'sqlite:///{db_path}'
-    print(f"Conectando a base de datos: {db_url}")
+    # Conectar a base de datos (usar settings para obtener DATABASE_URL de producción)
+    settings = get_settings()
+
+    # Convertir async driver (asyncpg) a sync driver (psycopg2) para create_all
+    db_url = settings.database_url.replace('postgresql+asyncpg', 'postgresql+psycopg2')
+
+    print(f"Conectando a base de datos...")
+    print(f"Driver: psycopg2 (sync)")
 
     engine = create_engine(db_url, echo=False)
 
