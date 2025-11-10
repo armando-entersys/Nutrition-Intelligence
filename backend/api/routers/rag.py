@@ -11,11 +11,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
-from backend.core.deps import get_current_user, get_db
-from backend.models.user import User
-from backend.services.rag.search_service import RAGSearchService
-from backend.services.rag.context_builder import RAGContextBuilder
-from backend.services.ai.gemini_service import GeminiService
+from core.auth import get_current_user
+from core.database import get_async_session
+from models.user import User
+from services.rag.search_service import RAGSearchService
+from services.rag.context_builder import RAGContextBuilder
+from services.ai.gemini_service import GeminiService
 
 
 router = APIRouter(prefix="/rag", tags=["rag"])
@@ -69,7 +70,7 @@ class ChatRequest(BaseModel):
 async def search_products(
     request: SearchProductsRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     Buscar productos NOM-051
@@ -99,7 +100,7 @@ async def search_products(
 async def search_foods(
     request: SearchFoodsRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     Buscar alimentos en base SMAE
@@ -128,7 +129,7 @@ async def search_foods(
 async def search_combined(
     request: SearchCombinedRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     Búsqueda combinada en productos y alimentos
@@ -164,7 +165,7 @@ async def search_combined(
 async def get_user_context(
     request: BuildContextRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     Obtener contexto completo del usuario
@@ -191,7 +192,7 @@ async def get_patient_context(
     patient_id: int,
     history_days: int = Query(default=30, ge=1, le=365),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     Obtener contexto completo de un paciente
@@ -228,7 +229,7 @@ async def get_patient_context(
 async def get_search_context(
     query: str = Query(..., min_length=1, max_length=200),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     Obtener contexto basado en búsqueda
@@ -255,7 +256,7 @@ async def get_search_context(
 async def chat_with_rag(
     request: ChatRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     Chat con IA usando RAG

@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-from backend.core.config import get_settings
+from core.config import get_settings
 
 logger = logging.getLogger(__name__)
 

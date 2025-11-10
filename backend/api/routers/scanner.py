@@ -11,7 +11,7 @@ from decimal import Decimal
 import logging
 from datetime import datetime
 
-from core.database import get_db
+from core.database import get_async_session
 from core.auth import get_current_user
 from services.openfoodfacts.client import openfoodfacts_client
 from services.nom051.calculator import nom051_calculator
@@ -81,7 +81,7 @@ class ScanHistoryEntry(BaseModel):
 async def scan_barcode(
     barcode: str,
     user = Depends(get_current_user),
-    db = Depends(get_db)
+    db = Depends(get_async_session)
 ):
     """
     Scan a barcode and get product information with NOM-051 seals
@@ -234,7 +234,7 @@ async def scan_barcode(
 async def get_scan_history(
     limit: int = 20,
     user = Depends(get_current_user),
-    db = Depends(get_db)
+    db = Depends(get_async_session)
 ):
     """
     Get user's scan history
@@ -287,7 +287,7 @@ async def get_scan_history(
 @router.get("/stats")
 async def get_scan_stats(
     user = Depends(get_current_user),
-    db = Depends(get_db)
+    db = Depends(get_async_session)
 ):
     """
     Get scanning statistics for current user
@@ -552,7 +552,7 @@ def _map_category(categories: str) -> str:
 async def scan_label(
     image: UploadFile = File(...),
     user = Depends(get_current_user),
-    db = Depends(get_db)
+    db = Depends(get_async_session)
 ):
     """
     Scan product label using Vision AI with intelligent deduplication
