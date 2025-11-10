@@ -37,9 +37,12 @@ class Settings(BaseSettings):
     google_cloud_storage_bucket: Optional[str] = Field(default=None, env="GCS_BUCKET")
     sendgrid_api_key: Optional[str] = Field(default=None, env="SENDGRID_API_KEY")
     
-    # AI Services (Placeholders)
+    # AI Services
     ai_vision_api_key: Optional[str] = Field(default=None, env="AI_VISION_API_KEY")
     ai_nlp_api_key: Optional[str] = Field(default=None, env="AI_NLP_API_KEY")
+    gemini_api_key: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
+    anthropic_api_key: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")
+    default_ai_model: str = Field(default="gemini-pro", env="DEFAULT_AI_MODEL")
     
     # Rate Limiting
     rate_limit_requests: int = Field(default=100, env="RATE_LIMIT_REQUESTS")

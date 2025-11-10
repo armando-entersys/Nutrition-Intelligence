@@ -15,6 +15,7 @@ from backend.core.deps import get_current_user, get_db
 from backend.models.user import User
 from backend.services.rag.search_service import RAGSearchService
 from backend.services.rag.context_builder import RAGContextBuilder
+from backend.services.ai.gemini_service import GeminiService
 
 
 router = APIRouter(prefix="/rag", tags=["rag"])
@@ -300,6 +301,9 @@ async def chat_with_rag(
             max_products=20,
         )
 
+    # Inicializar servicio de IA
+    gemini_service = GeminiService()
+
     # Construir prompt para la IA
     system_prompt = """Eres un asistente nutricional experto en México.
 Tienes acceso a la base de datos de productos NOM-051 y alimentos SMAE.
@@ -313,23 +317,36 @@ Siempre:
 - Explica los sellos de advertencia cuando aparezcan productos
 """
 
-    user_prompt = f"""Pregunta del usuario: {request.message}
+    # Generar respuesta con Gemini AI
+    ai_response = await gemini_service.chat_with_context(
+        user_message=request.message,
+        system_prompt=system_prompt,
+        context=formatted_context,
+    )
 
-{formatted_context}
-"""
+    # Verificar si hubo error
+    if not ai_response.get("success"):
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating AI response: {ai_response.get('error', 'Unknown error')}"
+        )
 
-    # TODO: Aquí se llamaría a la IA (Gemini/Claude)
-    # Por ahora, retornamos el contexto estructurado
     return {
         "message": request.message,
         "user_id": current_user.id,
         "context_included": request.include_context,
         "search_included": request.include_search_results,
-        "user_context": user_context,
-        "search_results": search_results,
-        "system_prompt": system_prompt,
-        "user_prompt": user_prompt,
-        "note": "TODO: Integrar con Gemini/Claude para generar respuesta",
+        "ai_response": ai_response.get("response"),
+        "model": ai_response.get("model"),
+        "usage": ai_response.get("usage"),
+        "user_context_summary": {
+            "scan_count": len(user_context.get("scan_history", [])) if user_context else 0,
+            "favorite_foods_count": len(user_context.get("favorite_foods", [])) if user_context else 0,
+        } if user_context else None,
+        "search_results_summary": {
+            "products_count": len(search_results.get("products", [])) if search_results else 0,
+            "foods_count": len(search_results.get("foods", [])) if search_results else 0,
+        } if search_results else None,
     }
 
 
