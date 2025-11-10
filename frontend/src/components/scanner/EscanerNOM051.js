@@ -18,8 +18,10 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,
-  Collapse,
+  TextField,
+  ToggleButtonGroup,
+  ToggleButton,
+  CircularProgress,
 } from '@mui/material';
 import {
   CameraAlt as CameraIcon,
@@ -29,10 +31,15 @@ import {
   Close as CloseIcon,
   CompareArrows as CompareIcon,
   TipsAndUpdates as TipsIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
+  PhotoCamera as PhotoCameraIcon,
+  Image as ImageIcon,
+  Verified as VerifiedIcon,
+  People as PeopleIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  Public as PublicIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { scanBarcode, scanLabel, formatProductData } from '../../services/scannerService';
 
 const MotionPaper = motion(Paper);
 const MotionCard = motion(Card);
@@ -42,91 +49,21 @@ const MotionBox = motion(Box);
  * EscanerNOM051 - Escáner de Etiquetas según NOM-051
  *
  * Sistema para escanear productos y evaluar su cumplimiento con la NOM-051
- * Detecta los 5 sellos de advertencia y sugiere alternativas más saludables
+ * Detecta los 7 sellos de advertencia y sugiere alternativas más saludables
+ *
+ * Soporta dos modos de escaneo:
+ * 1. Código de barras: Busca en Open Food Facts
+ * 2. Etiqueta: Usa Vision AI para leer la tabla nutricional
  */
 const EscanerNOM051 = () => {
+  const [scanMode, setScanMode] = useState('barcode'); // 'barcode' o 'label'
   const [scanning, setScanning] = useState(false);
   const [scannedProduct, setScannedProduct] = useState(null);
   const [currentTab, setCurrentTab] = useState(0);
-  const [showAlternatives, setShowAlternatives] = useState(false);
-  const videoRef = useRef(null);
-
-  // Simulación de productos para demostración
-  const productosDemo = [
-    {
-      id: 'prod_001',
-      nombre: 'Refresco de Cola Regular 600ml',
-      marca: 'Marca Demo',
-      codigo_barras: '7501234567890',
-      informacion_nutricional: {
-        porcion: '100ml',
-        calorias: 42,
-        azucares_g: 10.6,
-        grasas_saturadas_g: 0,
-        grasas_trans_g: 0,
-        sodio_mg: 10,
-      },
-      sellos_advertencia: [
-        { tipo: 'exceso_azucares', activo: true },
-        { tipo: 'exceso_calorias', activo: false },
-        { tipo: 'exceso_grasas_saturadas', activo: false },
-        { tipo: 'exceso_grasas_trans', activo: false },
-        { tipo: 'exceso_sodio', activo: false },
-      ],
-      tiene_edulcorantes: false,
-      tiene_cafeina: true,
-      alternativas_saludables: ['prod_alt_001', 'prod_alt_002'],
-      imagen_url: '/images/productos/refresco-cola.jpg',
-    },
-    {
-      id: 'prod_002',
-      nombre: 'Galletas con Chispas de Chocolate',
-      marca: 'Marca Demo',
-      codigo_barras: '7501234567891',
-      informacion_nutricional: {
-        porcion: '30g (3 galletas)',
-        calorias: 145,
-        azucares_g: 8.5,
-        grasas_saturadas_g: 3.2,
-        grasas_trans_g: 0.1,
-        sodio_mg: 95,
-      },
-      sellos_advertencia: [
-        { tipo: 'exceso_azucares', activo: true },
-        { tipo: 'exceso_calorias', activo: true },
-        { tipo: 'exceso_grasas_saturadas', activo: true },
-        { tipo: 'exceso_grasas_trans', activo: false },
-        { tipo: 'exceso_sodio', activo: false },
-      ],
-      tiene_edulcorantes: false,
-      tiene_cafeina: false,
-      alternativas_saludables: ['prod_alt_003', 'prod_alt_004'],
-      imagen_url: '/images/productos/galletas-chocolate.jpg',
-    },
-  ];
-
-  const alternativasDemo = {
-    prod_alt_001: {
-      nombre: 'Agua Simple Natural',
-      sellos: 0,
-      beneficio: 'Sin calorías, sin azúcares, hidratación pura',
-    },
-    prod_alt_002: {
-      nombre: 'Agua de Jamaica sin Azúcar',
-      sellos: 0,
-      beneficio: 'Antioxidantes naturales, sin calorías añadidas',
-    },
-    prod_alt_003: {
-      nombre: 'Galletas de Avena Integral',
-      sellos: 0,
-      beneficio: 'Alto contenido de fibra, endulzadas con miel',
-    },
-    prod_alt_004: {
-      nombre: 'Amaranto con Miel',
-      sellos: 1,
-      beneficio: 'Proteína de alta calidad, superalimento mexicano',
-    },
-  };
+  const [error, setError] = useState(null);
+  const [barcode, setBarcode] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   const sellosInfo = {
     exceso_azucares: {
@@ -166,24 +103,116 @@ const EscanerNOM051 = () => {
     },
   };
 
-  const handleScanDemo = () => {
+  // Get auth token from localStorage
+  const getAuthToken = () => {
+    const authData = localStorage.getItem('auth');
+    if (authData) {
+      try {
+        const parsed = JSON.parse(authData);
+        return parsed.access_token || parsed.token;
+      } catch (e) {
+        console.error('Error parsing auth data:', e);
+      }
+    }
+    return null;
+  };
+
+  const handleScanModeChange = (event, newMode) => {
+    if (newMode !== null) {
+      setScanMode(newMode);
+      setError(null);
+      setBarcode('');
+      setSelectedFile(null);
+    }
+  };
+
+  const handleScanBarcode = async () => {
+    if (!barcode.trim()) {
+      setError('Por favor ingresa un código de barras válido');
+      return;
+    }
+
     setScanning(true);
-    // Simular escaneo con un pequeño delay
-    setTimeout(() => {
-      const productoAleatorio = productosDemo[Math.floor(Math.random() * productosDemo.length)];
-      setScannedProduct(productoAleatorio);
-      setScanning(false);
+    setError(null);
+
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No se encontró token de autenticación. Por favor inicia sesión.');
+      }
+
+      const data = await scanBarcode(barcode, token);
+      const formattedData = formatProductData(data);
+      setScannedProduct(formattedData);
       setCurrentTab(0);
-    }, 2000);
+    } catch (err) {
+      console.error('Error scanning barcode:', err);
+      setError(err.message || 'Error al escanear código de barras. Intenta de nuevo.');
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setError('Formato de archivo inválido. Por favor usa JPG, PNG o WEBP.');
+        return;
+      }
+
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        setError('El archivo es demasiado grande. Tamaño máximo: 10MB.');
+        return;
+      }
+
+      setSelectedFile(file);
+      setError(null);
+    }
+  };
+
+  const handleScanLabel = async () => {
+    if (!selectedFile) {
+      setError('Por favor selecciona una imagen de la etiqueta del producto');
+      return;
+    }
+
+    setScanning(true);
+    setError(null);
+
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No se encontró token de autenticación. Por favor inicia sesión.');
+      }
+
+      const data = await scanLabel(selectedFile, token);
+      const formattedData = formatProductData(data);
+      setScannedProduct(formattedData);
+      setCurrentTab(0);
+    } catch (err) {
+      console.error('Error scanning label:', err);
+      setError(err.message || 'Error al escanear etiqueta. Asegúrate de que la foto muestre claramente la tabla nutricional.');
+    } finally {
+      setScanning(false);
+    }
   };
 
   const handleCloseScan = () => {
     setScannedProduct(null);
-    setShowAlternatives(false);
+    setBarcode('');
+    setSelectedFile(null);
+    setError(null);
   };
 
   const renderSello = (sello) => {
     const info = sellosInfo[sello.tipo];
+    if (!info) return null;
+
     return (
       <MotionBox
         key={sello.tipo}
@@ -240,6 +269,12 @@ const EscanerNOM051 = () => {
     );
   };
 
+  const getHealthScoreColor = (score) => {
+    if (score >= 80) return '#4CAF50';
+    if (score >= 60) return '#FFC107';
+    return '#F44336';
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
@@ -274,7 +309,7 @@ const EscanerNOM051 = () => {
           <Grid item xs={12} sm={4}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" fontWeight={700}>
-                5
+                7
               </Typography>
               <Typography variant="body2">Sellos de Advertencia</Typography>
             </Box>
@@ -290,9 +325,9 @@ const EscanerNOM051 = () => {
           <Grid item xs={12} sm={4}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" fontWeight={700}>
-                100%
+                AI
               </Typography>
-              <Typography variant="body2">Cumplimiento Legal</Typography>
+              <Typography variant="body2">Vision AI + OCR</Typography>
             </Box>
           </Grid>
         </Grid>
@@ -307,69 +342,204 @@ const EscanerNOM051 = () => {
           elevation={3}
           sx={{ p: 4, borderRadius: 3 }}
         >
-          <Box sx={{ textAlign: 'center' }}>
-            <Box
-              sx={{
-                width: '100%',
-                maxWidth: 400,
-                height: 300,
-                mx: 'auto',
-                mb: 3,
-                background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                overflow: 'hidden',
-                border: '3px dashed #ccc',
-              }}
+          {/* Mode Selector */}
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Typography variant="h6" gutterBottom fontWeight={700}>
+              Selecciona el Modo de Escaneo
+            </Typography>
+            <ToggleButtonGroup
+              value={scanMode}
+              exclusive
+              onChange={handleScanModeChange}
+              sx={{ mt: 2 }}
             >
-              {scanning ? (
-                <Box sx={{ textAlign: 'center' }}>
-                  <CameraIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary">
-                    Escaneando producto...
-                  </Typography>
-                  <LinearProgress sx={{ mt: 2, width: 200 }} />
-                </Box>
-              ) : (
-                <Box sx={{ textAlign: 'center' }}>
-                  <QrIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary">
-                    Coloca el código de barras aquí
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<CameraIcon />}
-              onClick={handleScanDemo}
-              disabled={scanning}
-              sx={{
-                py: 1.5,
-                px: 4,
-                fontSize: '1.1rem',
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
-                },
-              }}
-            >
-              {scanning ? 'Escaneando...' : 'Escanear Producto (Demo)'}
-            </Button>
-
-            <Alert severity="info" sx={{ mt: 3 }}>
-              <Typography variant="body2">
-                <strong>Modo demostración:</strong> Esta funcionalidad muestra productos de ejemplo.
-                La versión completa integrará OCR real y base de datos de productos.
-              </Typography>
-            </Alert>
+              <ToggleButton value="barcode" sx={{ px: 4, py: 1.5 }}>
+                <QrIcon sx={{ mr: 1 }} />
+                Código de Barras
+              </ToggleButton>
+              <ToggleButton value="label" sx={{ px: 4, py: 1.5 }}>
+                <PhotoCameraIcon sx={{ mr: 1 }} />
+                Etiqueta (Foto)
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Barcode Scanner */}
+          {scanMode === 'barcode' && (
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={700}>
+                Escanear Código de Barras
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 3 }}>
+                Ingresa el código de barras del producto (13 dígitos)
+              </Typography>
+
+              <Box
+                sx={{
+                  width: '100%',
+                  maxWidth: 400,
+                  mx: 'auto',
+                  mb: 3,
+                }}
+              >
+                <TextField
+                  fullWidth
+                  label="Código de Barras"
+                  placeholder="7501234567890"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  disabled={scanning}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleScanBarcode();
+                    }
+                  }}
+                  sx={{ mb: 2 }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  startIcon={scanning ? <CircularProgress size={20} color="inherit" /> : <QrIcon />}
+                  onClick={handleScanBarcode}
+                  disabled={scanning || !barcode.trim()}
+                  sx={{
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
+                    },
+                  }}
+                >
+                  {scanning ? 'Buscando producto...' : 'Buscar Producto'}
+                </Button>
+              </Box>
+
+              <Alert severity="info" sx={{ mt: 3 }}>
+                <Typography variant="body2">
+                  <strong>Base de datos:</strong> Busca en Open Food Facts (12,000+ productos mexicanos).
+                  Si no encuentra el producto, prueba el modo de escaneo por foto.
+                </Typography>
+              </Alert>
+            </Box>
+          )}
+
+          {/* Label Scanner */}
+          {scanMode === 'label' && (
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={700}>
+                Escanear Etiqueta Nutricional
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 3 }}>
+                Toma una foto de la tabla nutricional del producto
+              </Typography>
+
+              <Box
+                sx={{
+                  width: '100%',
+                  maxWidth: 400,
+                  mx: 'auto',
+                  mb: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: 250,
+                    background: selectedFile
+                      ? `url(${URL.createObjectURL(selectedFile)}) center/cover`
+                      : 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
+                    borderRadius: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '3px dashed #ccc',
+                    mb: 2,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {!selectedFile && (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <ImageIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Selecciona una imagen
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                />
+
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<PhotoCameraIcon />}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={scanning}
+                  sx={{ mb: 2 }}
+                >
+                  Seleccionar Imagen
+                </Button>
+
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  startIcon={scanning ? <CircularProgress size={20} color="inherit" /> : <CameraIcon />}
+                  onClick={handleScanLabel}
+                  disabled={scanning || !selectedFile}
+                  sx={{
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
+                    },
+                  }}
+                >
+                  {scanning ? 'Analizando imagen...' : 'Analizar Etiqueta'}
+                </Button>
+              </Box>
+
+              <Alert severity="info" sx={{ mt: 3 }}>
+                <Typography variant="body2">
+                  <strong>Vision AI:</strong> Usa inteligencia artificial para leer la tabla nutricional.
+                  Asegúrate de que la foto sea clara y muestre toda la información nutricional.
+                </Typography>
+              </Alert>
+            </Box>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <Alert severity="error" sx={{ mt: 3 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+
+          {/* Loading State */}
+          {scanning && (
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <LinearProgress sx={{ mb: 2 }} />
+              <Typography variant="body2" color="text.secondary">
+                {scanMode === 'barcode'
+                  ? 'Buscando producto en la base de datos...'
+                  : 'Extrayendo información nutricional con Vision AI...'}
+              </Typography>
+            </Box>
+          )}
         </MotionPaper>
       )}
 
@@ -386,7 +556,7 @@ const EscanerNOM051 = () => {
             {/* Header con producto */}
             <Box
               sx={{
-                background: 'linear-gradient(135deg, #1976D2 0%, #0D47A1 100%)',
+                background: `linear-gradient(135deg, ${getHealthScoreColor(scannedProduct.health_score)} 0%, ${getHealthScoreColor(scannedProduct.health_score)}dd 100%)`,
                 color: 'white',
                 p: 3,
                 display: 'flex',
@@ -394,13 +564,109 @@ const EscanerNOM051 = () => {
                 alignItems: 'flex-start',
               }}
             >
-              <Box>
+              <Box sx={{ flex: 1 }}>
                 <Typography variant="h5" fontWeight={700}>
                   {scannedProduct.nombre}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
                   {scannedProduct.marca} • Código: {scannedProduct.codigo_barras}
                 </Typography>
+                <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box>
+                    <Typography variant="h3" fontWeight={700}>
+                      {scannedProduct.health_score}
+                    </Typography>
+                    <Typography variant="caption">Puntuación</Typography>
+                  </Box>
+                  <Box>
+                    <Chip
+                      label={scannedProduct.health_level}
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.3)',
+                        color: 'white',
+                        fontWeight: 700,
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Estadísticas Globales del Producto */}
+                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {/* Badge: Producto Duplicado */}
+                  {scannedProduct.is_duplicate && (
+                    <Chip
+                      icon={<AutoAwesomeIcon />}
+                      label="Producto ya registrado"
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.25)',
+                        color: 'white',
+                        fontWeight: 600,
+                        border: '1px solid rgba(255,255,255,0.4)',
+                      }}
+                    />
+                  )}
+
+                  {/* Chip: Número de escaneos */}
+                  {scannedProduct.scan_count > 1 && (
+                    <Chip
+                      icon={<PeopleIcon />}
+                      label={`Escaneado ${scannedProduct.scan_count} veces`}
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.25)',
+                        color: 'white',
+                        fontWeight: 600,
+                        border: '1px solid rgba(255,255,255,0.4)',
+                      }}
+                    />
+                  )}
+
+                  {/* Badge: Verificado por nutriólogo */}
+                  {scannedProduct.verified && (
+                    <Chip
+                      icon={<VerifiedIcon />}
+                      label="Verificado por Nutriólogo"
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(33, 150, 243, 0.9)',
+                        color: 'white',
+                        fontWeight: 700,
+                        border: '2px solid rgba(255,255,255,0.8)',
+                      }}
+                    />
+                  )}
+
+                  {/* Chip: Producto Global */}
+                  {scannedProduct.is_global && (
+                    <Chip
+                      icon={<PublicIcon />}
+                      label="Global"
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.25)',
+                        color: 'white',
+                        fontWeight: 600,
+                        border: '1px solid rgba(255,255,255,0.4)',
+                      }}
+                    />
+                  )}
+
+                  {/* Chip: Confianza de IA (solo para escaneos con Vision AI) */}
+                  {scannedProduct.confidence_score && scannedProduct.fuente === 'ai_vision' && (
+                    <Chip
+                      icon={<AutoAwesomeIcon />}
+                      label={`IA: ${Math.round(scannedProduct.confidence_score)}% confianza`}
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(156, 39, 176, 0.9)',
+                        color: 'white',
+                        fontWeight: 600,
+                        border: '1px solid rgba(255,255,255,0.4)',
+                      }}
+                    />
+                  )}
+                </Box>
               </Box>
               <IconButton onClick={handleCloseScan} sx={{ color: 'white' }}>
                 <CloseIcon />
@@ -415,7 +681,6 @@ const EscanerNOM051 = () => {
             >
               <Tab label="Sellos de Advertencia" />
               <Tab label="Información Nutricional" />
-              <Tab label="Alternativas Saludables" />
             </Tabs>
 
             <CardContent sx={{ p: 3 }}>
@@ -440,36 +705,38 @@ const EscanerNOM051 = () => {
                   </Grid>
 
                   {/* Advertencias adicionales */}
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                      Leyendas Precautorias
-                    </Typography>
-                    <Grid container spacing={1}>
-                      {scannedProduct.tiene_edulcorantes && (
-                        <Grid item xs={12} sm={6}>
-                          <Chip
-                            icon={<WarningIcon />}
-                            label="Contiene Edulcorantes - No Recomendable en Niños"
-                            color="warning"
-                            sx={{ width: '100%' }}
-                          />
-                        </Grid>
-                      )}
-                      {scannedProduct.tiene_cafeina && (
-                        <Grid item xs={12} sm={6}>
-                          <Chip
-                            icon={<WarningIcon />}
-                            label="Contiene Cafeína - Evitar en Niños"
-                            color="warning"
-                            sx={{ width: '100%' }}
-                          />
-                        </Grid>
-                      )}
-                    </Grid>
-                  </Box>
+                  {(scannedProduct.tiene_edulcorantes || scannedProduct.tiene_cafeina) && (
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                        Leyendas Precautorias
+                      </Typography>
+                      <Grid container spacing={1}>
+                        {scannedProduct.tiene_edulcorantes && (
+                          <Grid item xs={12} sm={6}>
+                            <Chip
+                              icon={<WarningIcon />}
+                              label="Contiene Edulcorantes - No Recomendable en Niños"
+                              color="warning"
+                              sx={{ width: '100%' }}
+                            />
+                          </Grid>
+                        )}
+                        {scannedProduct.tiene_cafeina && (
+                          <Grid item xs={12} sm={6}>
+                            <Chip
+                              icon={<WarningIcon />}
+                              label="Contiene Cafeína - Evitar en Niños"
+                              color="warning"
+                              sx={{ width: '100%' }}
+                            />
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
+                  )}
 
                   {/* Resumen de riesgo */}
-                  {scannedProduct.sellos_advertencia.filter((s) => s.activo).length > 0 && (
+                  {scannedProduct.sellos_advertencia.filter((s) => s.activo).length > 0 ? (
                     <Alert severity="error" sx={{ mt: 3 }}>
                       <Typography variant="body2" fontWeight={700}>
                         Producto NO RECOMENDADO
@@ -481,7 +748,38 @@ const EscanerNOM051 = () => {
                         más saludables.
                       </Typography>
                     </Alert>
+                  ) : (
+                    <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 3 }}>
+                      <Typography variant="body2" fontWeight={700}>
+                        Producto SALUDABLE
+                      </Typography>
+                      <Typography variant="body2">
+                        Este producto no presenta sellos de advertencia NOM-051.
+                      </Typography>
+                    </Alert>
                   )}
+
+                  {/* Fuente de datos y estadísticas globales */}
+                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
+                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                      <strong>Fuente:</strong>{' '}
+                      {scannedProduct.fuente === 'open_food_facts' && 'Open Food Facts'}
+                      {scannedProduct.fuente === 'ai_vision' && 'Vision AI (OCR)'}
+                      {scannedProduct.fuente === 'local' && 'Base de datos local'}
+                    </Typography>
+                    {scannedProduct.is_duplicate && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Este producto ya existía en nuestra base de datos global. Tu escaneo se ha registrado
+                        en tu historial personal.
+                      </Typography>
+                    )}
+                    {!scannedProduct.is_duplicate && scannedProduct.fuente === 'ai_vision' && (
+                      <Typography variant="caption" color="success.main" display="block">
+                        ¡Gracias! Has agregado este producto a la base de datos global.
+                        Ahora otros usuarios podrán beneficiarse de esta información.
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
               )}
 
@@ -500,6 +798,23 @@ const EscanerNOM051 = () => {
                       <ListItemText
                         primary="Calorías"
                         secondary={`${scannedProduct.informacion_nutricional.calorias} kcal`}
+                      />
+                      {scannedProduct.sellos_advertencia.find(
+                        (s) => s.tipo === 'exceso_calorias' && s.activo
+                      ) && <WarningIcon color="error" />}
+                    </ListItem>
+                    <Divider />
+                    <ListItem>
+                      <ListItemText
+                        primary="Proteínas"
+                        secondary={`${scannedProduct.informacion_nutricional.proteinas_g}g`}
+                      />
+                    </ListItem>
+                    <Divider />
+                    <ListItem>
+                      <ListItemText
+                        primary="Carbohidratos"
+                        secondary={`${scannedProduct.informacion_nutricional.carbohidratos_g}g`}
                       />
                     </ListItem>
                     <Divider />
@@ -535,6 +850,13 @@ const EscanerNOM051 = () => {
                     <Divider />
                     <ListItem>
                       <ListItemText
+                        primary="Fibra"
+                        secondary={`${scannedProduct.informacion_nutricional.fibra_g}g`}
+                      />
+                    </ListItem>
+                    <Divider />
+                    <ListItem>
+                      <ListItemText
                         primary="Sodio"
                         secondary={`${scannedProduct.informacion_nutricional.sodio_mg}mg`}
                       />
@@ -543,106 +865,39 @@ const EscanerNOM051 = () => {
                       ) && <WarningIcon color="error" />}
                     </ListItem>
                   </List>
-                </Box>
-              )}
 
-              {/* Tab 2: Alternativas Saludables */}
-              {currentTab === 2 && (
-                <Box>
-                  <Typography variant="h6" gutterBottom fontWeight={700}>
-                    Alternativas Más Saludables
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Productos similares con menos sellos de advertencia
-                  </Typography>
-
-                  <Grid container spacing={2} sx={{ mt: 2 }}>
-                    {scannedProduct.alternativas_saludables.map((altId) => {
-                      const alt = alternativasDemo[altId];
-                      return (
-                        <Grid item xs={12} sm={6} key={altId}>
-                          <MotionCard
-                            whileHover={{ scale: 1.02 }}
-                            sx={{
-                              p: 2,
-                              border: '2px solid',
-                              borderColor: alt.sellos === 0 ? 'success.main' : 'warning.main',
-                              borderRadius: 2,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                              <CheckCircleIcon
-                                sx={{
-                                  fontSize: 40,
-                                  color: alt.sellos === 0 ? 'success.main' : 'warning.main',
-                                }}
-                              />
-                              <Box sx={{ flex: 1 }}>
-                                <Typography variant="subtitle1" fontWeight={700}>
-                                  {alt.nombre}
-                                </Typography>
-                                <Chip
-                                  size="small"
-                                  label={`${alt.sellos} sellos`}
-                                  color={alt.sellos === 0 ? 'success' : 'warning'}
-                                  sx={{ mt: 1 }}
-                                />
-                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                  {alt.beneficio}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </MotionCard>
-                        </Grid>
-                      );
-                    })}
-                  </Grid>
-
-                  <Alert severity="success" icon={<TipsIcon />} sx={{ mt: 3 }}>
-                    <Typography variant="body2" fontWeight={700}>
-                      Consejo Nutricional
-                    </Typography>
-                    <Typography variant="body2">
-                      Prioriza alimentos con menos sellos de advertencia. Los productos sin sellos
-                      son más saludables para ti y tu familia.
-                    </Typography>
-                  </Alert>
+                  {/* Ingredientes si están disponibles */}
+                  {scannedProduct.ingredientes && (
+                    <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                      <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                        Ingredientes
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {scannedProduct.ingredientes}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               )}
             </CardContent>
 
             {/* Footer con acciones */}
             <Box sx={{ p: 2, bgcolor: 'background.default', borderTop: '1px solid #e0e0e0' }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<CompareIcon />}
-                    onClick={() => setCurrentTab(2)}
-                  >
-                    Ver Alternativas
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={<CameraIcon />}
-                    onClick={handleScanDemo}
-                  >
-                    Escanear Otro Producto
-                  </Button>
-                </Grid>
-              </Grid>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<CameraIcon />}
+                onClick={handleCloseScan}
+              >
+                Escanear Otro Producto
+              </Button>
             </Box>
           </MotionCard>
         )}
       </AnimatePresence>
 
       {/* Información sobre NOM-051 */}
-      {!scannedProduct && (
+      {!scannedProduct && !scanning && (
         <MotionPaper
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -654,7 +909,7 @@ const EscanerNOM051 = () => {
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
             La Norma Oficial Mexicana NOM-051 establece el etiquetado frontal de advertencia para
-            productos procesados. Los 5 sellos de advertencia alertan sobre el exceso de:
+            productos procesados. Los 7 sellos de advertencia alertan sobre el exceso de:
           </Typography>
           <Grid container spacing={2}>
             {Object.entries(sellosInfo).map(([key, info]) => (
@@ -672,6 +927,32 @@ const EscanerNOM051 = () => {
                 </Box>
               </Grid>
             ))}
+            <Grid item xs={12} sm={6} md={4}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <WarningIcon color="warning" />
+                <Box>
+                  <Typography variant="body2" fontWeight={700}>
+                    CONTIENE EDULCORANTES
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    No recomendable para niños
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <WarningIcon color="warning" />
+                <Box>
+                  <Typography variant="body2" fontWeight={700}>
+                    CONTIENE CAFEÍNA
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Evitar en niños
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
           </Grid>
         </MotionPaper>
       )}

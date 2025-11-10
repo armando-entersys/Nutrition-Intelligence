@@ -1,8 +1,9 @@
 """
 NOM-051 Scanner API Router
 Provides barcode scanning and product lookup with NOM-051 seals
+Also supports label scanning using Vision AI with intelligent deduplication
 """
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, File, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -14,6 +15,14 @@ from core.database import get_db
 from core.auth import get_current_user
 from services.openfoodfacts.client import openfoodfacts_client
 from services.nom051.calculator import nom051_calculator
+from services.ai.vision import extract_nutrition_label
+from services.utils.image_utils import (
+    calculate_image_hash,
+    calculate_perceptual_hash,
+    calculate_average_hash,
+    images_are_similar,
+    extract_image_metadata
+)
 
 logger = logging.getLogger(__name__)
 
@@ -537,6 +546,550 @@ def _map_category(categories: str) -> str:
         return 'VEGETABLES'
     else:
         return 'OTROS'
+
+
+@router.post("/label")
+async def scan_label(
+    image: UploadFile = File(...),
+    user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Scan product label using Vision AI with intelligent deduplication
+
+    Global Product System:
+    1. Calculates image hash for exact duplicate detection
+    2. Searches for existing products in global database
+    3. If duplicate found: increments scan count, registers in user history
+    4. If new product: creates global product entry
+    5. Stores image in product_images table for deduplication
+    6. Always maintains private user scan history
+
+    Args:
+        image: Product label image file (JPG, PNG, WEBP)
+        user: Current authenticated user
+        db: Database connection
+
+    Returns:
+        ProductResponse with extracted data and global metadata
+    """
+    try:
+        start_time = datetime.now()
+        user_id = user.get('user_id')
+        logger.info(f"Scanning label image for user {user_id}")
+
+        # Validate file type
+        allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+        if image.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Tipo de archivo inválido. Formatos soportados: JPG, PNG, WEBP"
+            )
+
+        # Read image bytes
+        image_bytes = await image.read()
+
+        # Validate file size (10MB max)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if len(image_bytes) > max_size:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Archivo demasiado grande. Tamaño máximo: 10MB"
+            )
+
+        logger.info(f"Image received: {image.filename} ({len(image_bytes)} bytes)")
+
+        # STEP 1: Calculate image hashes for deduplication
+        logger.info("Calculating image hashes for deduplication...")
+        image_hash_sha256 = calculate_image_hash(image_bytes, "sha256")
+        perceptual_hash = calculate_perceptual_hash(image_bytes)
+
+        logger.info(f"Image SHA-256: {image_hash_sha256[:16]}...")
+        logger.info(f"Perceptual hash: {perceptual_hash}")
+
+        # STEP 2: Check for exact duplicate by image hash
+        logger.info("Checking for existing product with same image...")
+        existing_product = await _find_product_by_image_hash(image_hash_sha256, db)
+
+        if existing_product:
+            logger.info(f"✅ DUPLICATE FOUND! Product ID: {existing_product['id']} - {existing_product['nombre']}")
+
+            # Register scan in user's history
+            scan_history_id = await _register_user_scan(
+                user_id=user_id,
+                product_id=existing_product['id'],
+                scan_type='label',
+                db=db
+            )
+
+            logger.info(f"Registered in user scan history (ID: {scan_history_id})")
+
+            # Return existing product data with updated metadata
+            response_time = (datetime.now() - start_time).total_seconds() * 1000
+            existing_product['response_time_ms'] = int(response_time)
+            existing_product['is_duplicate'] = True
+            existing_product['scan_history_id'] = scan_history_id
+
+            return JSONResponse(content=existing_product, status_code=status.HTTP_200_OK)
+
+        # STEP 3: Extract nutrition data from label using Vision AI
+        logger.info("NEW PRODUCT - Extracting nutritional data with Vision AI...")
+        label_data = await extract_nutrition_label(image_bytes)
+
+        # Parse extracted data
+        producto = label_data.get('producto', {})
+        nutricion = label_data.get('nutricion', {})
+        confidence_score = label_data.get('confidence_score', 0)
+
+        # Validate that we got meaningful data
+        if not producto.get('nombre') and not nutricion.get('calorias'):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No se pudo extraer información nutricional de la imagen. Asegúrate de que la foto muestre claramente la tabla nutricional."
+            )
+
+        product_name = producto.get('nombre') or "Producto escaneado"
+        product_brand = producto.get('marca')
+
+        # STEP 4: Check for similar products by name/brand
+        logger.info(f"Checking for similar products: '{product_name}' by '{product_brand}'")
+        similar_products = await _find_similar_products_by_text(
+            nombre=product_name,
+            marca=product_brand,
+            image_hash=image_hash_sha256,
+            db=db
+        )
+
+        if similar_products:
+            logger.info(f"Found {len(similar_products)} similar products (by text similarity)")
+            # TODO: In future, could ask user if this is the same product
+            # For now, we create a new product entry
+
+        # Determine if product is liquid (default to solid)
+        is_liquid = False
+
+        # STEP 5: Calculate NOM-051 seals
+        seals = nom051_calculator.calculate_seals(
+            calorias=nutricion.get('calorias') or 0,
+            azucares=nutricion.get('azucares') or 0,
+            grasas_saturadas=nutricion.get('grasas_saturadas') or 0,
+            grasas_trans=nutricion.get('grasas_trans') or 0,
+            sodio=nutricion.get('sodio') or 0,
+            is_liquid=is_liquid,
+            contiene_edulcorantes=label_data.get('contiene_edulcorantes', False),
+            contiene_cafeina=label_data.get('contiene_cafeina', False)
+        )
+
+        # Calculate health score
+        health_score, health_level, health_color = nom051_calculator.get_health_score(seals)
+
+        # STEP 6: Create new global product
+        logger.info("Creating new global product...")
+        product_id = await _create_global_product(
+            nombre=product_name,
+            marca=product_brand,
+            porcion_gramos=producto.get('porcion_gramos') or 100.0,
+            calorias=nutricion.get('calorias') or 0,
+            proteinas=nutricion.get('proteinas') or 0,
+            carbohidratos=nutricion.get('carbohidratos') or 0,
+            azucares=nutricion.get('azucares') or 0,
+            grasas_totales=nutricion.get('grasas_totales') or 0,
+            grasas_saturadas=nutricion.get('grasas_saturadas') or 0,
+            grasas_trans=nutricion.get('grasas_trans') or 0,
+            fibra=nutricion.get('fibra') or 0,
+            sodio=nutricion.get('sodio') or 0,
+            seals=seals,
+            ingredientes=label_data.get('ingredientes'),
+            image_hash=image_hash_sha256,
+            perceptual_hash=perceptual_hash,
+            confidence_score=confidence_score,
+            created_by_user_id=user_id,
+            db=db
+        )
+
+        logger.info(f"✨ Created new global product with ID: {product_id}")
+
+        # STEP 7: Store product image
+        await _save_product_image(
+            product_id=product_id,
+            image_bytes=image_bytes,
+            image_hash=image_hash_sha256,
+            image_type='label',
+            uploaded_by_user_id=user_id,
+            db=db
+        )
+
+        # STEP 8: Register scan in user's history
+        scan_history_id = await _register_user_scan(
+            user_id=user_id,
+            product_id=product_id,
+            scan_type='label',
+            db=db
+        )
+
+        response_time = (datetime.now() - start_time).total_seconds() * 1000
+
+        # Build response with global metadata
+        product_data = {
+            "id": product_id,
+            "codigo_barras": f"AI_{product_id}",  # Virtual barcode for AI-scanned products
+            "nombre": product_name,
+            "marca": product_brand,
+            "porcion_gramos": producto.get('porcion_gramos') or 100.0,
+            "calorias": nutricion.get('calorias') or 0,
+            "proteinas": nutricion.get('proteinas') or 0,
+            "carbohidratos": nutricion.get('carbohidratos') or 0,
+            "azucares": nutricion.get('azucares') or 0,
+            "grasas_totales": nutricion.get('grasas_totales') or 0,
+            "grasas_saturadas": nutricion.get('grasas_saturadas') or 0,
+            "grasas_trans": nutricion.get('grasas_trans') or 0,
+            "fibra": nutricion.get('fibra') or 0,
+            "sodio": nutricion.get('sodio') or 0,
+            **seals.to_dict(),
+            "imagen_url": None,
+            "ingredientes": label_data.get('ingredientes'),
+            "categoria": "OTROS",
+            "fuente": "ai_vision",
+            "health_score": health_score,
+            "health_level": health_level,
+            "health_color": health_color,
+            # Global product metadata
+            "is_global": True,
+            "scan_count": 1,
+            "confidence_score": confidence_score,
+            "created_by_user_id": user_id,
+            "verified": False,
+            "is_duplicate": False,
+            "scan_history_id": scan_history_id,
+            "response_time_ms": int(response_time)
+        }
+
+        logger.info(f"Label scan completed in {response_time:.0f}ms. Confidence: {confidence_score}%")
+
+        return JSONResponse(content=product_data, status_code=status.HTTP_200_OK)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error scanning label: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al escanear etiqueta: {str(e)}"
+        )
+
+
+async def _find_product_by_image_hash(image_hash: str, db) -> Optional[Dict[str, Any]]:
+    """
+    Find existing product by exact image hash
+
+    Returns product data with health score if found, None otherwise
+    """
+    try:
+        query = """
+            SELECT
+                p.id,
+                p.nombre,
+                p.marca,
+                p.porcion_gramos,
+                p.calorias,
+                p.proteinas,
+                p.carbohidratos,
+                p.azucares,
+                p.grasas_totales,
+                p.grasas_saturadas,
+                p.grasas_trans,
+                p.fibra,
+                p.sodio,
+                p.exceso_calorias,
+                p.exceso_azucares,
+                p.exceso_grasas_saturadas,
+                p.exceso_grasas_trans,
+                p.exceso_sodio,
+                p.contiene_edulcorantes,
+                p.contiene_cafeina,
+                p.ingredientes,
+                p.fuente,
+                p.image_hash,
+                p.scan_count,
+                p.verified,
+                p.confidence_score,
+                p.created_by_user_id,
+                p.is_global
+            FROM productos_nom051 p
+            WHERE p.image_hash = $1
+            LIMIT 1
+        """
+
+        row = await db.fetchrow(query, image_hash)
+
+        if not row:
+            return None
+
+        # Calculate health score
+        from services.nom051.calculator import NOM051Seals
+        seals = NOM051Seals(
+            exceso_calorias=row['exceso_calorias'],
+            exceso_azucares=row['exceso_azucares'],
+            exceso_grasas_saturadas=row['exceso_grasas_saturadas'],
+            exceso_grasas_trans=row['exceso_grasas_trans'],
+            exceso_sodio=row['exceso_sodio'],
+            contiene_edulcorantes=row['contiene_edulcorantes'],
+            contiene_cafeina=row['contiene_cafeina']
+        )
+        health_score, health_level, health_color = nom051_calculator.get_health_score(seals)
+
+        return {
+            "id": row['id'],
+            "codigo_barras": f"AI_{row['id']}",
+            "nombre": row['nombre'],
+            "marca": row['marca'],
+            "porcion_gramos": float(row['porcion_gramos']) if row['porcion_gramos'] else 100.0,
+            "calorias": float(row['calorias']) if row['calorias'] else 0,
+            "proteinas": float(row['proteinas']) if row['proteinas'] else 0,
+            "carbohidratos": float(row['carbohidratos']) if row['carbohidratos'] else 0,
+            "azucares": float(row['azucares']) if row['azucares'] else 0,
+            "grasas_totales": float(row['grasas_totales']) if row['grasas_totales'] else 0,
+            "grasas_saturadas": float(row['grasas_saturadas']) if row['grasas_saturadas'] else 0,
+            "grasas_trans": float(row['grasas_trans']) if row['grasas_trans'] else 0,
+            "fibra": float(row['fibra']) if row['fibra'] else 0,
+            "sodio": float(row['sodio']) if row['sodio'] else 0,
+            "exceso_calorias": row['exceso_calorias'],
+            "exceso_azucares": row['exceso_azucares'],
+            "exceso_grasas_saturadas": row['exceso_grasas_saturadas'],
+            "exceso_grasas_trans": row['exceso_grasas_trans'],
+            "exceso_sodio": row['exceso_sodio'],
+            "contiene_edulcorantes": row['contiene_edulcorantes'],
+            "contiene_cafeina": row['contiene_cafeina'],
+            "ingredientes": row['ingredientes'],
+            "fuente": row['fuente'],
+            "health_score": health_score,
+            "health_level": health_level,
+            "health_color": health_color,
+            # Global metadata
+            "is_global": row['is_global'],
+            "scan_count": row['scan_count'],
+            "verified": row['verified'],
+            "confidence_score": row['confidence_score'],
+            "created_by_user_id": row['created_by_user_id']
+        }
+
+    except Exception as e:
+        logger.error(f"Error finding product by image hash: {e}")
+        return None
+
+
+async def _find_similar_products_by_text(
+    nombre: str,
+    marca: Optional[str],
+    image_hash: str,
+    db,
+    limit: int = 5
+) -> List[Dict[str, Any]]:
+    """
+    Find similar products using the find_similar_products SQL function
+
+    Uses both image hash matching and text similarity (pg_trgm)
+    """
+    try:
+        query = """
+            SELECT * FROM find_similar_products($1, $2, $3, $4)
+        """
+
+        rows = await db.fetch(
+            query,
+            nombre,
+            marca or '',
+            image_hash,
+            limit
+        )
+
+        return [
+            {
+                "product_id": row['product_id'],
+                "nombre": row['nombre'],
+                "marca": row['marca'],
+                "similarity_score": float(row['similarity_score']),
+                "match_type": row['match_type']
+            }
+            for row in rows
+        ]
+
+    except Exception as e:
+        logger.error(f"Error finding similar products: {e}")
+        return []
+
+
+async def _create_global_product(
+    nombre: str,
+    marca: Optional[str],
+    porcion_gramos: float,
+    calorias: float,
+    proteinas: float,
+    carbohidratos: float,
+    azucares: float,
+    grasas_totales: float,
+    grasas_saturadas: float,
+    grasas_trans: float,
+    fibra: float,
+    sodio: float,
+    seals: 'NOM051Seals',
+    ingredientes: Optional[str],
+    image_hash: str,
+    perceptual_hash: str,
+    confidence_score: float,
+    created_by_user_id: int,
+    db
+) -> int:
+    """
+    Create new global product with deduplication metadata
+
+    Returns the product ID
+    """
+    try:
+        query = """
+            INSERT INTO productos_nom051 (
+                nombre, marca, porcion_gramos,
+                calorias, proteinas, carbohidratos, azucares,
+                grasas_totales, grasas_saturadas, grasas_trans, fibra, sodio,
+                exceso_calorias, exceso_azucares, exceso_grasas_saturadas,
+                exceso_grasas_trans, exceso_sodio, contiene_edulcorantes, contiene_cafeina,
+                ingredientes, categoria, fuente,
+                image_hash, created_by_user_id, scan_count, verified,
+                confidence_score, is_global, validado
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+                $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
+                $23, $24, $25, $26, $27, $28, $29
+            )
+            RETURNING id
+        """
+
+        row = await db.fetchrow(
+            query,
+            nombre,
+            marca,
+            porcion_gramos,
+            calorias,
+            proteinas,
+            carbohidratos,
+            azucares,
+            grasas_totales,
+            grasas_saturadas,
+            grasas_trans,
+            fibra,
+            sodio,
+            seals.exceso_calorias,
+            seals.exceso_azucares,
+            seals.exceso_grasas_saturadas,
+            seals.exceso_grasas_trans,
+            seals.exceso_sodio,
+            seals.contiene_edulcorantes,
+            seals.contiene_cafeina,
+            ingredientes,
+            "OTROS",  # categoria
+            "ai_vision",  # fuente
+            image_hash,
+            created_by_user_id,
+            1,  # scan_count (first scan)
+            False,  # verified
+            confidence_score,
+            True,  # is_global
+            False  # validado (not validated yet)
+        )
+
+        return row['id']
+
+    except Exception as e:
+        logger.error(f"Error creating global product: {e}")
+        raise
+
+
+async def _save_product_image(
+    product_id: int,
+    image_bytes: bytes,
+    image_hash: str,
+    image_type: str,
+    uploaded_by_user_id: int,
+    db
+):
+    """
+    Save product image to product_images table
+
+    Stores image for deduplication and visual reference
+    """
+    try:
+        # Extract image metadata
+        metadata = extract_image_metadata(image_bytes)
+
+        query = """
+            INSERT INTO product_images (
+                product_id,
+                image_data,
+                image_hash,
+                image_type,
+                uploaded_by_user_id,
+                is_primary
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (image_hash) DO NOTHING
+        """
+
+        await db.execute(
+            query,
+            product_id,
+            image_bytes,  # Store actual image bytes
+            image_hash,
+            image_type,
+            uploaded_by_user_id,
+            True  # First image is primary
+        )
+
+        logger.info(f"Saved product image: {image_type}, {metadata.get('width')}x{metadata.get('height')}, {len(image_bytes)} bytes")
+
+    except Exception as e:
+        logger.error(f"Error saving product image: {e}")
+        # Don't raise - image storage is not critical
+
+
+async def _register_user_scan(
+    user_id: int,
+    product_id: int,
+    scan_type: str,
+    db
+) -> Optional[int]:
+    """
+    Register scan in user's private history using register_product_scan SQL function
+
+    Also increments global scan_count for the product
+
+    Returns scan history ID
+    """
+    try:
+        query = """
+            SELECT register_product_scan($1, $2, $3, $4, $5) as scan_history_id
+        """
+
+        # Device info (could be passed from frontend in future)
+        device_info = {
+            "platform": "web",
+            "timestamp": datetime.now().isoformat()
+        }
+
+        row = await db.fetchrow(
+            query,
+            user_id,
+            product_id,
+            scan_type,
+            device_info,  # JSONB
+            None  # location_context
+        )
+
+        return row['scan_history_id'] if row else None
+
+    except Exception as e:
+        logger.error(f"Error registering user scan: {e}")
+        return None
 
 
 @router.get("/health")

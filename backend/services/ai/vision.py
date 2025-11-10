@@ -41,6 +41,67 @@ else:
 
 
 # Prompt especializado para análisis de comida mexicana
+# Prompt especializado para lectura de etiquetas nutricionales
+NUTRITION_LABEL_EXTRACTION_PROMPT = """
+Extrae TODA la información nutricional de esta etiqueta de producto. Eres un experto en leer tablas nutricionales y normas NOM-051.
+
+Tu tarea es extraer:
+
+1. **Información del Producto**:
+   - Nombre del producto
+   - Marca
+   - Tamaño de porción (gramos o ml)
+   - Nivel de confianza (0-100)
+
+2. **Valores Nutricionales por porción**:
+   - Calorías (kcal)
+   - Proteínas (g)
+   - Carbohidratos totales (g)
+   - Azúcares (g)
+   - Grasas totales (g)
+   - Grasas saturadas (g)
+   - Grasas trans (g)
+   - Fibra dietética (g)
+   - Sodio (mg)
+
+3. **Información Adicional**:
+   - Lista de ingredientes (texto completo)
+   - Contiene edulcorantes (buscar: sucralosa, aspartame, stevia, acesulfame K, etc.)
+   - Contiene cafeína (buscar en ingredientes)
+
+IMPORTANTE:
+- Si algún valor no está visible o no se puede leer, usa null
+- Los valores deben estar normalizados por 100g o 100ml
+- Si la etiqueta muestra valores por porción diferente a 100g, normaliza los valores
+- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional
+
+Formato JSON exacto:
+
+{
+  "producto": {
+    "nombre": "string o null",
+    "marca": "string o null",
+    "porcion_gramos": number o null,
+    "confianza": number (0-100)
+  },
+  "nutricion": {
+    "calorias": number o null,
+    "proteinas": number o null,
+    "carbohidratos": number o null,
+    "azucares": number o null,
+    "grasas_totales": number o null,
+    "grasas_saturadas": number o null,
+    "grasas_trans": number o null,
+    "fibra": number o null,
+    "sodio": number o null
+  },
+  "ingredientes": "string o null",
+  "contiene_edulcorantes": boolean,
+  "contiene_cafeina": boolean,
+  "confidence_score": number (0-100)
+}
+"""
+
 MEXICAN_FOOD_ANALYSIS_PROMPT = """
 Analiza esta imagen de comida mexicana en detalle. Eres un experto en nutrición mexicana y conoces el Sistema Mexicano de Alimentos Equivalentes (SMAE).
 
@@ -440,6 +501,154 @@ class FoodVisionService:
             "full_analysis": result
         }
 
+    async def extract_nutrition_label(self, image_bytes: bytes) -> Dict[str, Any]:
+        """
+        Extract nutritional information from product label image
+
+        Args:
+            image_bytes: Image data as bytes
+
+        Returns:
+            Dict containing extracted product and nutritional information
+        """
+        try:
+            # Validate image
+            image = Image.open(BytesIO(image_bytes))
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+
+            logger.info(f"Extracting nutrition label using {self.model_mode} mode...")
+
+            # Try Gemini first (if available and mode allows)
+            if self.model_mode in ["gemini", "hybrid"] and self.gemini_available:
+                try:
+                    result = await self._extract_label_with_gemini(image_bytes)
+
+                    # In hybrid mode, check confidence threshold
+                    if self.model_mode == "hybrid":
+                        confidence = result.get("confidence_score", 0)
+                        if confidence < CONFIDENCE_THRESHOLD and self.claude_available:
+                            logger.info(f"Gemini confidence ({confidence}) below threshold ({CONFIDENCE_THRESHOLD}). Trying Claude...")
+                            return await self._extract_label_with_claude(image_bytes)
+
+                    return result
+                except Exception as e:
+                    logger.error(f"Gemini label extraction failed: {e}")
+                    # Fallback to Claude if available
+                    if self.claude_available and self.model_mode == "hybrid":
+                        logger.info("Falling back to Claude Vision for label extraction...")
+                        return await self._extract_label_with_claude(image_bytes)
+                    raise
+
+            # Use Claude if specified or as fallback
+            elif self.model_mode == "claude" and self.claude_available:
+                return await self._extract_label_with_claude(image_bytes)
+
+            # No models available
+            else:
+                logger.error("No AI vision models available for label extraction")
+                raise ValueError("No AI vision models available")
+
+        except Exception as e:
+            logger.error(f"Error in nutrition label extraction: {e}")
+            raise
+
+    async def _extract_label_with_gemini(self, image_bytes: bytes) -> Dict[str, Any]:
+        """Extract nutrition label using Gemini Vision"""
+        try:
+            # Convert image bytes to PIL Image
+            image = Image.open(BytesIO(image_bytes))
+
+            # Generate content with Gemini
+            response = gemini_model.generate_content([
+                NUTRITION_LABEL_EXTRACTION_PROMPT,
+                image
+            ])
+
+            # Parse JSON response
+            response_text = response.text.strip()
+
+            # Remove markdown code blocks if present
+            if response_text.startswith("```json"):
+                response_text = response_text[7:]
+            if response_text.startswith("```"):
+                response_text = response_text[3:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+
+            result = json.loads(response_text.strip())
+
+            logger.info(f"Gemini label extraction completed. Confidence: {result.get('confidence_score', 0)}")
+            return result
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Gemini JSON response: {e}")
+            logger.error(f"Raw response: {response.text}")
+            raise ValueError(f"Invalid JSON response from Gemini: {str(e)}")
+        except Exception as e:
+            logger.error(f"Gemini Vision API error: {e}")
+            raise
+
+    async def _extract_label_with_claude(self, image_bytes: bytes) -> Dict[str, Any]:
+        """Extract nutrition label using Claude Vision"""
+        try:
+            # Encode image to base64
+            base64_image = base64.b64encode(image_bytes).decode('utf-8')
+
+            # Detect image format
+            image = Image.open(BytesIO(image_bytes))
+            image_format = image.format.lower() if image.format else 'jpeg'
+            media_type = f"image/{image_format}"
+
+            # Generate content with Claude
+            message = anthropic_client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2048,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": media_type,
+                                    "data": base64_image,
+                                },
+                            },
+                            {
+                                "type": "text",
+                                "text": NUTRITION_LABEL_EXTRACTION_PROMPT
+                            }
+                        ],
+                    }
+                ],
+            )
+
+            # Parse JSON response
+            response_text = message.content[0].text.strip()
+
+            # Remove markdown code blocks if present
+            if response_text.startswith("```json"):
+                response_text = response_text[7:]
+            if response_text.startswith("```"):
+                response_text = response_text[3:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+
+            result = json.loads(response_text.strip())
+
+            logger.info(f"Claude label extraction completed. Confidence: {result.get('confidence_score', 0)}")
+            return result
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Claude JSON response: {e}")
+            logger.error(f"Raw response: {message.content[0].text}")
+            raise ValueError(f"Invalid JSON response from Claude: {str(e)}")
+        except Exception as e:
+            logger.error(f"Claude Vision API error: {e}")
+            raise
+
 
 # Service instance
 food_vision_service = FoodVisionService()
@@ -456,3 +665,7 @@ async def classify_food_item(food_name: str, image_bytes: bytes) -> Dict[str, An
 async def estimate_portions(image_bytes: bytes, reference_objects: List[str] = None) -> Dict[str, Any]:
     """Estimate portion sizes"""
     return await food_vision_service.get_portion_estimation(image_bytes, reference_objects)
+
+async def extract_nutrition_label(image_bytes: bytes) -> Dict[str, Any]:
+    """Extract nutritional information from product label"""
+    return await food_vision_service.extract_nutrition_label(image_bytes)

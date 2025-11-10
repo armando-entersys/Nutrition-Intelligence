@@ -30,6 +30,7 @@ twilio==8.10.0
 
 # AI/ML Placeholders
 pillow==10.1.0
+imagehash==4.3.1
 numpy==1.25.2
 google-generativeai==0.3.2
 anthropic==0.25.0
