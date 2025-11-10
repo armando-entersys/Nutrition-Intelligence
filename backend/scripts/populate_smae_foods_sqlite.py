@@ -1,21 +1,20 @@
 """
-Script para poblar la base de datos con alimentos del Sistema Mexicano de Alimentos Equivalentes (SMAE)
-Usa SQL directo para evitar problemas de mapeo de ORM
+Script para poblar la base de datos SQLite con alimentos del Sistema Mexicano de Alimentos Equivalentes (SMAE)
+Versión para SQLite en lugar de PostgreSQL
 """
 import sys
 import os
 import json
 import re
+import sqlite3
 from pathlib import Path
-import psycopg2
-from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde .env
 load_dotenv()
 
 # Mapeo de categorías SMAE a categorías del sistema
-# IMPORTANTE: Los valores del enum en PostgreSQL son UPPERCASE
+# IMPORTANTE: Los valores del enum en SQLite son UPPERCASE
 CATEGORY_MAP = {
     'cereales_sin_grasa': 'CEREALS',
     'cereales_con_grasa': 'CEREALS',
@@ -108,7 +107,7 @@ def extract_serving_size(cantidad_porcion: str):
     return 100.0
 
 def populate_database():
-    """Pobla la base de datos usando SQL directo"""
+    """Pobla la base de datos SQLite usando SQL directo"""
 
     # Leer archivo de alimentos
     data_path = Path(__file__).parent.parent / 'data' / 'alimentosMexicanos.js'
@@ -127,17 +126,11 @@ def populate_database():
 
     print(f"Se encontraron {len(foods_data)} alimentos")
 
-    # Conectar a base de datos
-    database_url = os.getenv('DATABASE_URL')
-    if not database_url:
-        print("ERROR: DATABASE_URL no está configurada")
-        return
+    # Conectar a base de datos SQLite
+    db_path = Path(__file__).parent.parent / 'nutrition_intelligence.db'
 
-    # Convertir async driver a sync driver
-    database_url = database_url.replace('postgresql+asyncpg', 'postgresql')
-
-    print("Conectando a base de datos...")
-    conn = psycopg2.connect(database_url)
+    print(f"Conectando a base de datos SQLite: {db_path}")
+    conn = sqlite3.connect(str(db_path))
     cursor = conn.cursor()
 
     try:
@@ -149,7 +142,7 @@ def populate_database():
                 name = food_data.get('nombre', '')
 
                 # Verificar si ya existe
-                cursor.execute("SELECT id FROM foods WHERE name = %s", (name,))
+                cursor.execute("SELECT id FROM foods WHERE name = ?", (name,))
                 if cursor.fetchone():
                     print(f"[SKIP] Omitiendo (ya existe): {name}")
                     foods_skipped += 1
@@ -157,13 +150,13 @@ def populate_database():
 
                 # Mapear categoría
                 categoria_smae = food_data.get('categoria_equivalente', '').replace('CATEGORIAS_EQUIVALENTES.', '')
-                categoria = CATEGORY_MAP.get(categoria_smae, 'CEREALS')  # Default to CEREALS (uppercase)
+                categoria = CATEGORY_MAP.get(categoria_smae, 'CEREALS')
 
                 # Extraer tamaño de porción
                 cantidad_porcion = food_data.get('cantidad_porcion', '100g')
                 serving_size = extract_serving_size(cantidad_porcion)
 
-                # Preparar datos
+                # Preparar datos JSON
                 vitamins_json = json.dumps({
                     'vitamin_a_mcg': food_data.get('vitamina_a_mcg', 0),
                     'vitamin_c_mg': food_data.get('vitamina_c_mg', 0),
@@ -176,6 +169,8 @@ def populate_database():
                 })
 
                 dietary_flags = json.dumps(['traditional_mexican'] if food_data.get('es_tradicional_mexicano', False) else [])
+                search_keywords = json.dumps([name])
+                allergens = json.dumps([])
 
                 # Insertar en la base de datos
                 insert_query = """
@@ -185,10 +180,10 @@ def populate_database():
                     vitamins, minerals, glycemic_index, allergens, dietary_flags,
                     description, source, status, search_keywords, created_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s,
-                    %s::jsonb, %s::jsonb, %s, %s, %s::jsonb,
-                    %s, %s, %s, %s, NOW()
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, datetime('now')
                 )
                 """
 
@@ -204,12 +199,12 @@ def populate_database():
                     vitamins_json,
                     minerals_json,
                     food_data.get('indice_glucemico'),
-                    json.dumps([]),  # allergens
+                    allergens,
                     dietary_flags,
                     food_data.get('descripcion', ''),
                     'SMAE (Sistema Mexicano de Alimentos Equivalentes)',
                     'APPROVED',
-                    json.dumps([name]),
+                    search_keywords,
                 ))
 
                 foods_added += 1

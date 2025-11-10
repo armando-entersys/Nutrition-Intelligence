@@ -1,0 +1,6 @@
+{
+  "email": "armando.cortes@scram2k.com",
+  "password": "Test123456!",
+  "role": "ADMIN",
+  "endpoint": "https://nutrition-intelligence.scram2k.com/api/v1/auth/login"
+}

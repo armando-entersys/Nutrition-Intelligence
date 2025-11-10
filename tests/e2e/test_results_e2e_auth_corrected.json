@@ -1,0 +1,75 @@
+{
+  "suite": "Autenticación E2E (Corregido)",
+  "timestamp": "2025-11-06T21:57:16.373Z",
+  "baseUrl": "https://nutrition-intelligence.scram2k.com",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "successRate": "100.00%"
+  },
+  "details": [
+    {
+      "id": "TEST-AUTH-004",
+      "name": "Login Usuario Nutriólogo",
+      "status": "PASÓ",
+      "timestamp": "2025-11-06T21:56:40.111Z",
+      "actualResult": "Login exitoso - Usuario: armandocortes, Role: nutritionist",
+      "expectedResult": "Login exitoso con credenciales válidas de nutriólogo",
+      "responseStatus": 200,
+      "userId": 1,
+      "hasAccessToken": true,
+      "hasRefreshToken": true
+    },
+    {
+      "id": "TEST-AUTH-005",
+      "name": "Login Usuario Paciente",
+      "status": "PASÓ",
+      "timestamp": "2025-11-06T21:56:45.234Z",
+      "actualResult": "Login exitoso - Usuario: zeroarmando, Role: patient",
+      "expectedResult": "Login exitoso con credenciales válidas de paciente",
+      "responseStatus": 200,
+      "userId": 2,
+      "hasAccessToken": true,
+      "hasRefreshToken": true
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Email inexistente",
+      "status": "PASÓ",
+      "timestamp": "2025-11-06T21:56:49.411Z",
+      "actualResult": "Sistema rechazó correctamente con status 401",
+      "expectedResult": "Login rechazado con mensaje de error apropiado",
+      "responseStatus": 401,
+      "errorMessage": "Incorrect email or password"
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Password incorrecta",
+      "status": "PASÓ",
+      "timestamp": "2025-11-06T21:56:51.616Z",
+      "actualResult": "Sistema rechazó correctamente con status 401",
+      "expectedResult": "Login rechazado con mensaje de error apropiado",
+      "responseStatus": 401,
+      "errorMessage": "Incorrect email or password"
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Email vacío",
+      "status": "PASÓ",
+      "timestamp": "2025-11-06T21:57:03.474Z",
+      "actualResult": "Validación frontend previene envío con campos vacíos",
+      "expectedResult": "Login rechazado con mensaje de error apropiado",
+      "note": "Validación client-side - no se envió request al servidor (correcto)"
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Password vacío",
+      "status": "PASÓ",
+      "timestamp": "2025-11-06T21:57:15.361Z",
+      "actualResult": "Validación frontend previene envío con campos vacíos",
+      "expectedResult": "Login rechazado con mensaje de error apropiado",
+      "note": "Validación client-side - no se envió request al servidor (correcto)"
+    }
+  ]
+}

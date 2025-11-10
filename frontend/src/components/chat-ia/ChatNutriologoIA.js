@@ -28,6 +28,8 @@ import {
   FiberManualRecord,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
+import { API_BASE_URL } from '../../config/api';
 
 const ChatNutriologoIA = () => {
   const theme = useTheme();
@@ -170,80 +172,49 @@ const ChatNutriologoIA = () => {
 
   const quickSuggestions = generatePersonalizedSuggestions();
 
-  // Base de conocimiento
-  const generateAIResponse = (userMessage) => {
-    const lowerMessage = userMessage.toLowerCase();
+  // Función para llamar al API de chat del nutriólogo
+  const generateAIResponse = async (userMessage) => {
+    try {
+      // Construir el historial de conversación en el formato esperado por el API
+      const conversationHistory = messages
+        .filter(msg => msg.sender === 'user' || msg.sender === 'bot')
+        .map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        }));
 
-    if (lowerMessage.includes('tacos') || lowerMessage.includes('taco')) {
+      // Llamar al endpoint del backend
+      const response = await axios.post(
+        `${API_BASE_URL}/api/v1/nutritionist-chat/chat`,
+        {
+          message: userMessage,
+          conversation_history: conversationHistory
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000, // 30 segundos de timeout
+        }
+      );
+
+      // El API devuelve { response: string, tags: string[] }
       return {
-        text: '🌮 **Análisis de Tacos al Pastor**\n\n**Información Nutricional (3 tacos):**\n\n• Calorías: ~680 kcal\n• Proteína: 35g\n• Carbohidratos: 75g\n• Grasas: 22g\n\n**Tips para hacerlos más saludables:**\n\n✓ Usa tortilla de maíz (más fibra)\n✓ Reduce la porción de carne a 120g\n✓ Agrega piña natural, cebolla y cilantro\n✓ Limita a 2-3 tacos por comida\n✓ Acompaña con frijoles de la olla\n\n**Equivalencias SMAE:** 3 cereales + 3 carnes moderada grasa',
-        tags: ['alto_proteína', 'tradicional_mexicano'],
+        text: response.data.response,
+        tags: response.data.tags,
+      };
+    } catch (error) {
+      console.error('Error al comunicarse con el nutriólogo IA:', error);
+
+      // Respuesta de fallback en caso de error
+      return {
+        text: '🤔 Lo siento, estoy teniendo problemas para conectarme en este momento. Por favor intenta de nuevo en unos segundos.\n\nPuedo ayudarte con:\n\n• 📊 Análisis nutricional de platillos mexicanos\n• 🍽️ Recetas saludables tradicionales\n• 🔄 Equivalencias SMAE\n• 💡 Sustituciones para reducir calorías\n• 📋 Planificación de menús balanceados',
+        tags: ['error_conexion'],
       };
     }
-
-    if (lowerMessage.includes('frijol') || lowerMessage.includes('frijoles')) {
-      return {
-        text: '🫘 **Los Frijoles - Superalimento Mexicano**\n\n**Beneficios Nutricionales:**\n\n• 15g proteína vegetal por taza\n• 15g fibra soluble\n• Rico en hierro y magnesio\n• Bajo índice glucémico\n• Excelente para control de peso\n\n**Recetas Saludables:**\n\n1. Frijoles de la olla con epazote\n2. Sopa de frijol negro con chile\n3. Enfrijoladas con queso panela\n4. Tostadas con nopales\n\n**Equivalencia:** 1 taza = 2 leguminosas SMAE',
-        tags: ['alto_fibra', 'proteína_vegetal'],
-      };
-    }
-
-    if (lowerMessage.includes('tortilla')) {
-      return {
-        text: '🌽 **Tortillas - Comparativa Nutricional**\n\n**Tortilla de Maíz (30g):**\n• 64 kcal | 13g carbs | 1.5g fibra\n• Índice glucémico: Medio (52)\n• ✓ Más calcio y fibra\n\n**Tortilla de Harina (40g):**\n• 104 kcal | 18g carbs | 1g fibra\n• Índice glucémico: Alto (70)\n• ✗ Más calorías y menor fibra\n\n**Recomendación:** Prefiere maíz nixtamalizado\n\n**Alternativas:**\n• Maíz azul (más antioxidantes)\n• Integral\n• Con nopal (menos calorías)',
-        tags: ['cereal', 'índice_glucémico'],
-      };
-    }
-
-    if (lowerMessage.includes('crema') || lowerMessage.includes('sustituto')) {
-      return {
-        text: '💡 **Sustitutos Saludables para Crema**\n\n1. **Yogurt Griego Natural** (0% grasa)\n   → 90% menos grasa\n   → Alto en proteína\n   → Textura cremosa\n\n2. **Jocoque**\n   → Tradicional mexicano\n   → Probióticos naturales\n\n3. **Aguacate Machacado**\n   → Grasas saludables\n   → Alto en fibra\n\n4. **Queso Cottage** licuado + limón\n   → Textura cremosa\n   → Bajo en grasa\n\n**Equivalencias:** 2 cdas crema = 1 grasa | 2 cdas yogurt = ½ leche',
-        tags: ['sustitución', 'bajo_grasa'],
-      };
-    }
-
-    if (lowerMessage.includes('receta') || lowerMessage.includes('chilaquiles')) {
-      return {
-        text: '👨‍🍳 **Chilaquiles Verdes Saludables**\n\n**Ingredientes (4 porciones):**\n• 8 tortillas (horneadas)\n• 2 tazas salsa verde casera\n• 1 pechuga deshebrada\n• ½ taza cebolla morada\n• ¼ taza queso panela\n• Cilantro fresco\n\n**Preparación:**\n1. Hornea las tortillas a 180°C x 15 min\n2. Licúa tomates, chile, cebolla, cilantro\n3. Calienta salsa y agrega tortillas\n4. Sirve con pollo y guarniciones\n\n**Por porción:** 320 kcal | 25g proteína\n**Equivalencias:** 2 cereales + 1 verdura + 2 carnes',
-        tags: ['receta', 'alto_proteína'],
-      };
-    }
-
-    if (lowerMessage.includes('cena') || lowerMessage.includes('ligera') || lowerMessage.includes('1800')) {
-      return {
-        text: '🌙 **Cenas Ligeras para ${patientData.calories_target} kcal/día**\n\n**Opción 1: Ensalada de Atún** (350 kcal)\n• 120g atún en agua\n• 2 tazas verduras mixtas\n• ½ aguacate\n• Limón y chile piquín\n\n**Opción 2: Tacos de Pescado** (420 kcal)\n• 2 tortillas de maíz\n• 150g pescado a la plancha\n• Pico de gallo\n• Repollo morado\n\n**Opción 3: Sopa de Verduras** (280 kcal)\n• Caldo de pollo\n• Nopales, calabaza, chayote\n• 1 taza frijoles\n\n**Tip:** Cena antes de las 8pm para mejor digestión',
-        tags: ['cena', 'bajo_calorías'],
-      };
-    }
-
-    if (lowerMessage.includes('pescado')) {
-      return {
-        text: '🐟 **Tacos Saludables de Pescado**\n\n**Ingredientes (2 tacos):**\n• 150g filete de pescado blanco\n• 2 tortillas de maíz\n• 1 taza repollo morado\n• ½ aguacate\n• Pico de gallo\n• Limón y cilantro\n\n**Preparación:**\n1. Sazona pescado con limón, ajo, comino\n2. Cocina a la plancha 4 min por lado\n3. Calienta tortillas\n4. Sirve con repollo, aguacate y pico de gallo\n\n**Información Nutricional:**\n• 420 kcal | 35g proteína | 12g grasa\n• Omega-3: 850mg\n\n**Equivalencias:** 2 cereales + 2 carnes bajo grasa + 1 grasa',
-        tags: ['pescado', 'alto_proteína', 'omega3'],
-      };
-    }
-
-    if (lowerMessage.includes('ensalada') || lowerMessage.includes('nopales') || lowerMessage.includes('atún')) {
-      return {
-        text: '🥗 **Ensalada de Nopales y Atún**\n\n**Ingredientes (1 porción):**\n• 1 taza nopales cocidos\n• 120g atún en agua\n• 1 taza jitomate cherry\n• ½ cebolla morada\n• Cilantro fresco\n• Jugo de 1 limón\n• 1 cdta aceite de oliva\n\n**Preparación:**\n1. Corta nopales en cuadritos\n2. Mezcla con atún escurrido\n3. Agrega jitomates, cebolla, cilantro\n4. Aliña con limón y aceite\n\n**Información Nutricional:**\n• 280 kcal | 30g proteína | 6g grasa | 8g fibra\n\n**Beneficios:** Alta fibra, bajo en calorías, perfecto para perder peso',
-        tags: ['ensalada', 'alto_fibra', 'bajo_calorías'],
-      };
-    }
-
-    if (lowerMessage.includes('lactosa') || lowerMessage.includes('alternativa') || lowerMessage.includes('sin lactosa')) {
-      return {
-        text: '🥛 **Alternativas Sin Lactosa para Crema**\n\n**1. Crema de Anacardo**\n• Remojar 1 taza anacardos 4hrs\n• Licuar con ½ taza agua\n• Agregar limón al gusto\n→ Textura cremosa, 0% lactosa\n\n**2. Yogurt de Coco**\n• Natural y sin azúcar\n• Probióticos incluidos\n→ Sabor suave, muy cremoso\n\n**3. Aguacate Batido**\n• Licuar aguacate maduro\n• Agregar limón y sal\n→ Grasas saludables, rico en fibra\n\n**4. Tofu Sedoso Licuado**\n• Licuar con limón\n• Agregar hierbas frescas\n→ Alto en proteína\n\n**Todas son aptas para tu restricción de lactosa**',
-        tags: ['sin_lactosa', 'alternativas'],
-      };
-    }
-
-    return {
-      text: '🤔 Puedo ayudarte con:\n\n• 📊 Análisis nutricional de platillos mexicanos\n• 🍽️ Recetas saludables tradicionales\n• 🔄 Equivalencias SMAE\n• 💡 Sustituciones para reducir calorías\n• 📋 Planificación de menús balanceados\n\n¿Sobre qué te gustaría saber?',
-      tags: ['ayuda_general'],
-    };
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputText.trim() === '') return;
 
     const userMessage = {
@@ -253,12 +224,14 @@ const ChatNutriologoIA = () => {
       timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
     };
 
+    const currentInput = inputText;
     setMessages([...messages, userMessage]);
     setInputText('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(inputText);
+    // Llamar al API de forma asíncrona
+    try {
+      const aiResponse = await generateAIResponse(currentInput);
       const botMessage = {
         id: messages.length + 2,
         sender: 'bot',
@@ -268,38 +241,46 @@ const ChatNutriologoIA = () => {
       };
 
       setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error al procesar mensaje:', error);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
-  const handleQuickSuggestion = (text) => {
+  const handleQuickSuggestion = async (text) => {
     setInputText(text);
-    // Enviar automáticamente la sugerencia
-    setTimeout(() => {
-      const newMessage = {
-        id: messages.length + 1,
-        sender: 'user',
-        text: text,
+
+    // Pequeño delay para que se vea la sugerencia en el input
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const newMessage = {
+      id: messages.length + 1,
+      sender: 'user',
+      text: text,
+      timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages([...messages, newMessage]);
+    setInputText('');
+    setIsTyping(true);
+
+    // Llamar al API de forma asíncrona
+    try {
+      const aiResponse = await generateAIResponse(text);
+      const botMessage = {
+        id: messages.length + 2,
+        sender: 'bot',
+        text: aiResponse.text,
+        tags: aiResponse.tags,
         timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
       };
-
-      setMessages([...messages, newMessage]);
-      setInputText('');
-      setIsTyping(true);
-
-      // Simular respuesta de la IA
-      setTimeout(() => {
-        const aiResponse = generateAIResponse(text);
-        const botMessage = {
-          id: messages.length + 2,
-          sender: 'bot',
-          text: aiResponse.text,
-          timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, botMessage]);
-        setIsTyping(false);
-      }, 1500);
-    }, 100);
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error al procesar sugerencia:', error);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e) => {

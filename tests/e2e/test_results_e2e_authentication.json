@@ -1,0 +1,97 @@
+{
+  "suite": "Autenticación",
+  "timestamp": "2025-11-06T15:12:13.867Z",
+  "baseUrl": "https://nutrition-intelligence.scram2k.com",
+  "summary": {
+    "total": 12,
+    "passed": 0,
+    "failed": 12,
+    "successRate": "0.00"
+  },
+  "details": [
+    {
+      "id": "TEST-AUTH-001",
+      "name": "Registro Usuario Nutriólogo",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:07.395Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-002",
+      "name": "Registro con Email Duplicado",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:15.896Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-003",
+      "name": "Password Débil: Muy corto (< 8 caracteres)",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:23.756Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-003",
+      "name": "Password Débil: 7 caracteres - límite inferior",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:29.608Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-003",
+      "name": "Password Débil: Sin mayúscula",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:35.662Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-003",
+      "name": "Password Débil: Sin número",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:41.577Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-004",
+      "name": "Login Usuario Nutriólogo",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:49.820Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-005",
+      "name": "Login Usuario Paciente",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:10:57.688Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Email inválido",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:11:05.661Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Password incorrecta",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:11:11.546Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Email vacío",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:11:17.908Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "TEST-AUTH-006",
+      "name": "Credenciales Incorrectas: Password vacío",
+      "status": "FALLÓ",
+      "timestamp": "2025-11-06T15:11:24.241Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"email\"]') to be visible\u001b[22m\n"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>
+	Login
+</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script type="text/javascript" async="" src="https://www.googletagmanager.com/gtag/js?id=G-GCFNBD59WG&amp;cx=c&amp;gtm=4e5b60h2"></script><script async="" src="https://www.googletagmanager.com/gtm.js?id=GTM-K5SDF3X"></script><script type="text/javascript" async="" src="https://www.google-analytics.com/analytics.js"></script><script type="text/javascript" async="" src="https://www.googletagmanager.com/gtag/js?id=G-SK9Z4LX5CE&amp;cx=c&amp;gtm=4e5b50"></script><script async="" src="https://www.googletagmanager.com/gtm.js?id=GTM-N3C3HLN"></script><script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-23182940-37"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-23182940-37');
+    </script>
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+        w[l] = w[l] || []; w[l].push({
+            'gtm.start':
+                new Date().getTime(), event: 'gtm.js'
+        }); var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+})(window, document, 'script', 'dataLayer', 'GTM-N3C3HLN');</script>
+    <!-- End Google Tag Manager -->
+    <link rel="stylesheet" href="/css/styleLogin.css"><link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/bootstrap.min.css"><link rel="stylesheet" href="/css/sweetalert.css"><link rel="shortcut icon" type="image/x-icon" href="/img/favicon.png">
+    <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/js/valida.js"></script>
+    <script type="text/javascript" src="/js/main.js"></script>
+    <script type="text/javascript" src="/js/sweetalert.js"></script>
+    <script type="text/javascript" src="/js/TagManagerBody.js?v=2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-K5SDF3X');</script></head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3C3HLN" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- Google Tag Manager (noscript) --> <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3C3HLN" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <!-- End Google Tag Manager (noscript) --><form method="post" action="./?ReturnUrl=%2fManager%2fGrupo%2fDefault.aspx" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="6/puCVFJv2g68YXFAAhi28cz9jWBRL2s3qv+VrCLFPb2MftXmp/6/zLhOlXa7TRKP1q4587Ql7sbUudUvfKKnp0blVTH7d12ovJwq0c6wZE=" style="">
+</div>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="25748CED" style="">
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="43tnyVZpedXKNGc05VQzLkZZeJN6Lh0wgGzg0B3YqPbnKM+l9Jf7AZ6BS9n7nxn2WwPlIcq18PKuCk7EOx7KbZfuuG//zDt7W5WkHK2szj6wyO/284mUAmloDhXJYyy/pbe2RJlfscye3VnGoN3kjUKnz0slMF/a+U/zcyDaCv8=" style="">
+</div>
+        
+        <div class="fondo">
+            <div class="logo-login">
+                <a href="/"><img src="/img/login/logo.png" alt="" style="width:100%;"></a>
+            </div>
+            <div class="formulario-login">
+                <h1>Inicia Sesión</h1>
+                <div class="form-group">
+                    <label for="exampleInputEmail1">Correo electrónico</label>
+                     <input name="email" type="text" id="email" autocomplete="off" placeholder="Usuario" class="form-control backEmail" onkeyup="test();" style="">
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputEmail1">Contraseña</label>
+                    <input name="password" type="password" id="password" autocomplete="off" placeholder="Contraseña" class="form-control backPassword" onkeyup="test();" style="">
+                </div>
+                
+                <a href="/RecuperaContrasena/" target="_self" class="linkPass">¿Olvidaste tu contraseña?</a>
+                <div class="cont-btn">
+                    <a href="#" id="btnIngresa" class="btn-ingresa" onclick="validaLogin();">Ingresar</a>
+                    <a href="#" id="btnPagar" class="btn-ingresa" style="display:none;" onclick="return validaPagoLogin();">PAGAR</a>
+                </div>
+                <input type="submit" name="btnEnter" value="" id="btnEnter" class="btnEnv" style="display: none;">
+                <div class="links">
+                    <p>¿No tienes cuenta? <a href="/Registrate/" target="_self">Crea una</a></p>
+                </div>
+            </div>
+        </div>
+    </form>
+
+<script type="text/javascript" id="" charset="">(function(){var a=document.createElement("script");a.innerHTML="(function(w,d,s,l,i){w[l]\x3dw[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f\x3dd.getElementsByTagName(s)[0], j\x3dd.createElement(s),dl\x3dl!\x3d'dataLayer'?'\x26l\x3d'+l:'';j.async\x3dtrue;j.src\x3d 'https://www.googletagmanager.com/gtm.js?id\x3d'+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-K5SDF3X');";document.head.appendChild(a)})();</script>
+
+
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K5SDF3X" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript></body></html>

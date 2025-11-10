@@ -27,7 +27,7 @@ CONFIDENCE_THRESHOLD = int(os.getenv("AI_VISION_CONFIDENCE_THRESHOLD", "75"))
 # Initialize Gemini
 if GOOGLE_API_KEY and GOOGLE_API_KEY != "your-google-gemini-api-key-here":
     genai.configure(api_key=GOOGLE_API_KEY)
-    gemini_model = genai.GenerativeModel('gemini-pro')  # Using gemini-pro for better quality
+    gemini_model = genai.GenerativeModel('gemini-1.5-pro-latest')  # Using gemini-1.5-pro for vision support
 else:
     gemini_model = None
     logger.warning("Google API key not configured. Gemini Vision disabled.")

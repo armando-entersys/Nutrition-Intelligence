@@ -12,7 +12,7 @@ import uuid
 from core.config import get_settings
 from core.database import init_db
 from core.logging import LoggingMiddleware, log_success, log_error
-from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress
+from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat
 from api.routers import auth_new, auth_complete
 
 logger = logging.getLogger(__name__)
@@ -117,6 +117,9 @@ def create_application() -> FastAPI:
 
     # AI Vision router
     app.include_router(vision.router, prefix="/api/v1/vision", tags=["ai-vision"])
+
+    # AI Nutritionist Chat router
+    app.include_router(nutritionist_chat.router, prefix="/api/v1/nutritionist-chat", tags=["nutritionist-chat"])
 
     # Laboratory Data router
     app.include_router(laboratory.router, prefix="/api/v1/laboratory", tags=["laboratory"])
