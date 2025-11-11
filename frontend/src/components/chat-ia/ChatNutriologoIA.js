@@ -30,6 +30,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config/api';
+import authService from '../../services/authService';
 
 const ChatNutriologoIA = () => {
   const theme = useTheme();
@@ -183,6 +184,9 @@ const ChatNutriologoIA = () => {
           content: msg.text
         }));
 
+      // Obtener token de autenticación
+      const token = authService.getAccessToken();
+
       // Llamar al endpoint del backend
       const response = await axios.post(
         `${API_BASE_URL}/api/v1/nutritionist-chat/chat`,
@@ -193,6 +197,7 @@ const ChatNutriologoIA = () => {
         {
           headers: {
             'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
           },
           timeout: 30000, // 30 segundos de timeout
         }
