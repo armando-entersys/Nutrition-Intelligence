@@ -11,9 +11,8 @@ from sqlalchemy import select, func, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from backend.models.product import ProductoNOM051
-from backend.models.food import FoodSMAE
-from backend.models.user import User
+from domain.foods.nom051_models import ProductoNOM051, FoodSMAE
+from domain.auth.models import AuthUser
 
 
 class RAGSearchService:

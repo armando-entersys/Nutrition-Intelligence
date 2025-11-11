@@ -12,7 +12,7 @@ import uuid
 from core.config import get_settings
 from core.database import init_db
 from core.logging import LoggingMiddleware, log_success, log_error
-from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat, scanner  # , rag  # TODO: Enable when models are created
+from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat, scanner, rag
 from api.routers import auth_new, auth_complete
 
 logger = logging.getLogger(__name__)
@@ -140,8 +140,7 @@ def create_application() -> FastAPI:
     app.include_router(patient_progress.router, prefix="/api/v1/patient-progress", tags=["patient-progress"])
 
     # RAG (Retrieval Augmented Generation) router
-    # TODO: Enable when ProductoNOM051 and FoodSMAE models are created
-    # app.include_router(rag.router, prefix="/api/v1", tags=["rag"])
+    app.include_router(rag.router, prefix="/api/v1", tags=["rag"])
 
     return app
 
