@@ -50,4 +50,4 @@ INSERT INTO productos_nom051 (
 ('7501055326243', 'Almendras Natural Sin Sal', 'Great Value', 100, 607, 21.4, 21.4, 3.6, 50.0, 3.6, 0.0, 10.7, 0, false, false, false, false, false, false, false, 'manual', true, true, 1, NOW(), NOW()),
 ('7501055327240', 'Avena Natural Quaker', 'Quaker', 100, 379, 13.7, 67.7, 1.0, 6.5, 1.1, 0.0, 10.1, 6, false, false, false, false, false, false, false, 'manual', true, true, 1, NOW(), NOW())
 
-ON CONFLICT (codigo_barras) DO NOTHING;
+;
