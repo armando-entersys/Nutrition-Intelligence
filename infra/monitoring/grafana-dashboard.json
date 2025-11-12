@@ -1,0 +1,129 @@
+{
+  "dashboard": {
+    "title": "Nutrition Intelligence - System Overview",
+    "tags": ["nutrition", "health"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Service Health Status",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=~\"nutrition.*\"}",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "DOWN", "color": "red"},
+              {"type": "value", "value": "1", "text": "UP", "color": "green"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Backend Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{name=\"nutrition-intelligence-backend\"} / 1024 / 1024",
+            "legendFormat": "Memory (MB)"
+          }
+        ]
+      },
+      {
+        "title": "Backend CPU Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{name=\"nutrition-intelligence-backend\"}[5m]) * 100",
+            "legendFormat": "CPU %"
+          }
+        ]
+      },
+      {
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"nutrition-backend\"}[5m])",
+            "legendFormat": "{{method}} {{path}}"
+          }
+        ]
+      },
+      {
+        "title": "Response Time (95th percentile)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"nutrition-backend\"}[5m]))",
+            "legendFormat": "p95"
+          }
+        ]
+      },
+      {
+        "title": "Database Connections",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends{datname=\"nutrition_intelligence\"}",
+            "legendFormat": "Active Connections"
+          }
+        ]
+      },
+      {
+        "title": "Redis Memory",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes{job=\"nutrition-redis\"} / 1024 / 1024",
+            "legendFormat": "Memory (MB)"
+          }
+        ]
+      },
+      {
+        "title": "RAG System Requests",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"nutrition-backend\",path=~\"/api/v1/rag/.*\"}[5m])",
+            "legendFormat": "{{path}}"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"nutrition-backend\",status=~\"5..\"}[5m])",
+            "legendFormat": "5xx Errors"
+          },
+          {
+            "expr": "rate(http_requests_total{job=\"nutrition-backend\",status=~\"4..\"}[5m])",
+            "legendFormat": "4xx Errors"
+          }
+        ]
+      }
+    ],
+    "refresh": "30s",
+    "time": {"from": "now-1h", "to": "now"}
+  }
+}

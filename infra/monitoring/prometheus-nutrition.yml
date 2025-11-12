@@ -1,0 +1,27 @@
+# Prometheus configuration for Nutrition Intelligence
+# Add this to your existing Prometheus config
+
+scrape_configs:
+  # Nutrition Intelligence Backend
+  - job_name: 'nutrition-backend'
+    static_configs:
+      - targets: ['nutrition-intelligence-backend:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # PostgreSQL Exporter (if installed)
+  - job_name: 'nutrition-postgres'
+    static_configs:
+      - targets: ['nutrition-intelligence-db:5432']
+    scrape_interval: 30s
+
+  # Redis Exporter (if installed)
+  - job_name: 'nutrition-redis'
+    static_configs:
+      - targets: ['nutrition-intelligence-redis:6379']
+    scrape_interval: 30s
+
+# Alert rules for Nutrition Intelligence
+rule_files:
+  - '/etc/prometheus/rules/nutrition-alerts.yml'

@@ -1,0 +1,71 @@
+# Prometheus Alert Rules for Nutrition Intelligence
+
+groups:
+  - name: nutrition_intelligence
+    interval: 30s
+    rules:
+      # Backend Health
+      - alert: NutritionBackendDown
+        expr: up{job="nutrition-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: nutrition-intelligence
+        annotations:
+          summary: "Nutrition Intelligence Backend is down"
+          description: "Backend has been down for more than 2 minutes"
+
+      # High Memory Usage
+      - alert: NutritionHighMemory
+        expr: container_memory_usage_bytes{name="nutrition-intelligence-backend"} / container_spec_memory_limit_bytes{name="nutrition-intelligence-backend"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: nutrition-intelligence
+        annotations:
+          summary: "Nutrition Intelligence Backend high memory usage"
+          description: "Backend memory usage is above 85% for 5 minutes"
+
+      # Database Connection Issues
+      - alert: NutritionDatabaseDown
+        expr: up{job="nutrition-postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nutrition-intelligence
+        annotations:
+          summary: "Nutrition Intelligence Database is down"
+          description: "PostgreSQL database has been down for more than 1 minute"
+
+      # High Response Time
+      - alert: NutritionSlowResponses
+        expr: http_request_duration_seconds{job="nutrition-backend",quantile="0.95"} > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: nutrition-intelligence
+        annotations:
+          summary: "Nutrition Intelligence API slow responses"
+          description: "95th percentile response time is above 2 seconds"
+
+      # Error Rate
+      - alert: NutritionHighErrorRate
+        expr: rate(http_requests_total{job="nutrition-backend",status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: nutrition-intelligence
+        annotations:
+          summary: "Nutrition Intelligence high error rate"
+          description: "Error rate is above 5% for 5 minutes"
+
+      # Redis Down
+      - alert: NutritionRedisDown
+        expr: up{job="nutrition-redis"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: nutrition-intelligence
+        annotations:
+          summary: "Nutrition Intelligence Redis is down"
+          description: "Redis has been down for more than 2 minutes"
