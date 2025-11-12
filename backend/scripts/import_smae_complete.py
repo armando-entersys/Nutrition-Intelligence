@@ -12,8 +12,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select
-from domain.foods.nom051_models import AlimentoSMAE
-from core.config import settings
+from domain.foods.nom051_models import FoodSMAE
+from core.config import get_settings
+
+settings = get_settings()
 
 # Lista completa de alimentos SMAE por grupo
 ALIMENTOS_SMAE = [
@@ -917,7 +919,7 @@ async def import_alimentos():
     """Importa los alimentos SMAE a la base de datos"""
     # Create async engine
     engine = create_async_engine(
-        settings.SQLALCHEMY_DATABASE_URI.replace("postgresql://", "postgresql+asyncpg://"),
+        settings.database_url.replace("postgresql://", "postgresql+asyncpg://"),
         echo=False
     )
 
@@ -935,8 +937,8 @@ async def import_alimentos():
             try:
                 # Check if already exists
                 result = await session.execute(
-                    select(AlimentoSMAE).where(
-                        AlimentoSMAE.nombre == alimento_data["nombre"]
+                    select(FoodSMAE).where(
+                        FoodSMAE.nombre == alimento_data["nombre"]
                     )
                 )
                 existing = result.scalar_one_or_none()
@@ -947,7 +949,7 @@ async def import_alimentos():
                     continue
 
                 # Create new alimento
-                alimento = AlimentoSMAE(**alimento_data)
+                alimento = FoodSMAE(**alimento_data)
                 session.add(alimento)
                 await session.commit()
 
