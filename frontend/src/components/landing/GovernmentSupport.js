@@ -157,6 +157,90 @@ const GovernmentSupport = () => {
           </div>
         </motion.div>
 
+        {/* Cultura Alimentaria - Sección Sutil */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mt-16 bg-gradient-to-br from-amber-50 via-white to-green-50 rounded-2xl shadow-lg p-8"
+        >
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-2xl font-bold text-center mb-6 text-gray-900">
+              México: 7mo Exportador Agroalimentario Mundial
+            </h3>
+
+            <p className="text-lg text-gray-700 text-center mb-8">
+              Nuestros productos de calidad superior alimentan al mundo. Es momento de que también alimenten a México.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+              {/* Lo que exportamos */}
+              <div className="bg-white rounded-xl p-6 shadow-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="text-4xl">🌎</div>
+                  <h4 className="text-xl font-bold text-green-700">Lo Mejor de México al Mundo</h4>
+                </div>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-1">✓</span>
+                    <span>Aguacate, berries, tomate de calidad premium</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-1">✓</span>
+                    <span>Café, cacao y miel reconocidos internacionalmente</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-1">✓</span>
+                    <span>Maíz nativo, frijol y cultivos ancestrales</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-1">✓</span>
+                    <span>750,000 productores mexicanos trabajando con excelencia</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* El desafío */}
+              <div className="bg-white rounded-xl p-6 shadow-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="text-4xl">🤔</div>
+                  <h4 className="text-xl font-bold text-orange-700">Un Desafío Nacional</h4>
+                </div>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-600 mt-1">•</span>
+                    <span>México: 4to lugar mundial en consumo de ultraprocesados</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-600 mt-1">•</span>
+                    <span>Crisis de obesidad y diabetes afectando a millones</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-600 mt-1">•</span>
+                    <span>Economía familiar impactada por decisiones alimentarias</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-orange-600 mt-1">•</span>
+                    <span>Productores locales necesitan nuestro apoyo</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Mensaje de empoderamiento */}
+            <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6 text-white text-center">
+              <p className="text-xl font-semibold mb-3">
+                Tu elección alimentaria es un voto por la salud de México
+              </p>
+              <p className="text-green-100">
+                Cada producto local que eliges fortalece a un productor mexicano,
+                mejora tu salud, y construye la soberanía alimentaria de nuestra nación.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Call to Action */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -166,7 +250,7 @@ const GovernmentSupport = () => {
           className="mt-12 text-center"
         >
           <p className="text-gray-600 mb-4">
-            Juntos por un México más saludable y soberano
+            Únete al movimiento por un México más saludable y soberano
           </p>
           <a
             href="/auth/register"
@@ -174,7 +258,7 @@ const GovernmentSupport = () => {
                      hover:bg-green-700 transition font-semibold text-lg
                      shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
-            Únete al Movimiento
+            Comienza Ahora - Es Gratis
           </a>
         </motion.div>
       </div>
