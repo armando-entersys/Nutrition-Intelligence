@@ -163,18 +163,18 @@ const Pricing = () => {
             className="max-w-7xl mx-auto"
           >
             <div className="grid md:grid-cols-3 gap-6">
-              {/* PLAN STARTER */}
-              <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 hover:shadow-2xl transition relative">
+              {/* PLAN STARTER - GRATIS */}
+              <div className="bg-gradient-to-br from-green-50 to-white rounded-2xl shadow-lg border-4 border-green-400 p-8 hover:shadow-2xl transition relative">
                 <div className="mb-6">
-                  <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full mb-4">
-                    <span className="text-xl">🌱</span>
-                    <span className="font-bold text-sm">STARTER</span>
+                  <div className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-full mb-4">
+                    <span className="text-xl">🎉</span>
+                    <span className="font-bold text-sm">100% GRATIS</span>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    Comienza tu Práctica
+                    Plan Starter
                   </h3>
                   <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-4xl font-bold text-gray-900">$299</span>
+                    <span className="text-5xl font-bold text-green-600">$0</span>
                     <span className="text-lg text-gray-600">MXN/mes</span>
                   </div>
                   <p className="text-sm text-gray-600">
@@ -191,7 +191,8 @@ const Pricing = () => {
                   <FeatureItem text="Análisis antropométrico básico" compact />
                   <FeatureItem text="Gráficas de progreso" compact />
                   <FeatureItem text="Sistema de citas (calendario básico)" compact />
-                  <FeatureItem text="Portal básico del paciente" compact />
+                  <FeatureItem text="Portal completo del paciente" compact />
+                  <FeatureItem text="Biblioteca de recetas mexicanas" compact />
                   <FeatureItem text="Mensajería con pacientes" compact />
                   <FeatureItem text="Plantillas de planes" compact />
                   <FeatureItem text="Reportes en PDF" compact />
@@ -200,13 +201,13 @@ const Pricing = () => {
 
                 <button
                   onClick={handleNutritionistDemo}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg
                            font-semibold transition shadow-md hover:shadow-lg"
                 >
-                  Empezar Prueba Gratis
+                  Comenzar Gratis Ahora
                 </button>
                 <p className="text-center text-gray-500 mt-3 text-xs">
-                  14 días gratis • Sin tarjeta
+                  Gratis para siempre • Sin tarjeta de crédito
                 </p>
               </div>
 
@@ -227,7 +228,7 @@ const Pricing = () => {
                     Práctica Completa
                   </h3>
                   <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-4xl font-bold text-gray-900">$699</span>
+                    <span className="text-4xl font-bold text-gray-900">$543</span>
                     <span className="text-lg text-gray-600">MXN/mes</span>
                   </div>
                   <p className="text-sm text-gray-600">
@@ -240,11 +241,9 @@ const Pricing = () => {
                   <FeatureItem text="Hasta 150 pacientes activos" purple compact />
                   <FeatureItem text="Videoconsultas integradas" purple compact />
                   <FeatureItem text="Sistema de cobro y facturación CFDI 4.0" purple compact />
-                  <FeatureItem text="Biblioteca de recetas mexicanas" purple compact />
                   <FeatureItem text="Análisis avanzados e IA predictiva" purple compact />
                   <FeatureItem text="Dashboard con KPIs profesionales" purple compact />
                   <FeatureItem text="Calendario avanzado + recordatorios automáticos" purple compact />
-                  <FeatureItem text="Portal completo del paciente" purple compact />
                   <FeatureItem text="Marca blanca personalizable" purple compact />
                   <FeatureItem text="Integración con wearables" purple compact />
                   <FeatureItem text="WhatsApp Business integration" purple compact />
