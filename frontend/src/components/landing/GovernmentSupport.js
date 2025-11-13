@@ -70,15 +70,15 @@ const GovernmentSupport = () => {
         >
           <div className="inline-flex items-center gap-3 bg-white rounded-full px-6 py-3 shadow-md mb-6">
             <span className="text-3xl">🇲🇽</span>
-            <span className="font-bold text-gray-900">Gobierno de México</span>
+            <span className="font-bold text-gray-900">Para el Pueblo de México</span>
           </div>
 
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Apoyando Iniciativas Presidenciales
+            Herramientas y Derechos para tu Salud
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Alineados con las políticas de nutrición y alimentación de la
-            <span className="font-semibold text-green-600"> Presidenta Claudia Sheinbaum</span>
+            Aprovecha las políticas públicas de nutrición y alimentación que son
+            <span className="font-semibold text-green-600"> tu derecho como mexicano</span>
           </p>
         </motion.div>
 
@@ -250,7 +250,7 @@ const GovernmentSupport = () => {
           className="mt-12 text-center"
         >
           <p className="text-gray-600 mb-4">
-            Únete al movimiento por un México más saludable y soberano
+            Únete al movimiento de mexicanos que eligen salud y productos nacionales
           </p>
           <a
             href="/auth/register"

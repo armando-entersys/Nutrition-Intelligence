@@ -45,11 +45,11 @@ const Hero = () => {
               y consulta con IA. Todo basado en estándares mexicanos NOM-051 y SMAE.
             </p>
 
-            {/* Government Badge */}
+            {/* Mexican Pride Badge */}
             <div className="mb-8 inline-flex items-center gap-2 bg-green-50 border-2 border-green-600 rounded-full px-4 py-2">
               <span className="text-2xl">🇲🇽</span>
               <span className="text-sm font-semibold text-green-800">
-                Apoyando iniciativas del Gobierno de México
+                Tu derecho a una alimentación saludable y mexicana
               </span>
             </div>
 
