@@ -1,6 +1,6 @@
 /**
- * Government Support Component - Landing Page
- * Shows government initiatives we support
+ * Mexican Resources Component - Landing Page
+ * Shows resources and programs available in Mexico
  */
 import React from 'react';
 import { motion } from 'framer-motion';
@@ -8,49 +8,49 @@ import { motion } from 'framer-motion';
 const initiatives = [
   {
     icon: '🏪',
-    title: 'Alimentación para el Bienestar',
-    description: '25,600 Tiendas Bienestar',
+    title: 'Tiendas Bienestar',
+    description: '25,600 puntos de venta',
     details: [
       'Catálogo de productos marca Bienestar',
-      'Mapa de tiendas cercanas',
-      'Productos nacionales a precios justos',
+      'Encuentra tiendas cercanas',
+      'Productos nacionales a precios accesibles',
       'Maíz, frijol, arroz, cacao, café, miel'
     ],
     color: 'from-green-500 to-green-600'
   },
   {
     icon: '🇲🇽',
-    title: 'Soberanía Alimentaria',
-    description: 'Apoyo a productores nacionales',
+    title: 'Productos Mexicanos',
+    description: 'De productores locales',
     details: [
       'Productos 100% mexicanos identificados',
       'Información de origen por estado',
-      'Sin intermediarios',
-      'Apoyo a pequeños productores'
+      'Directo del productor',
+      'Calidad y frescura garantizada'
     ],
     color: 'from-red-500 to-red-600'
   },
   {
     icon: '🏷️',
-    title: 'NOM-051 Fase 3',
-    description: 'Etiquetado más estricto',
+    title: 'Etiquetado NOM-051',
+    description: 'Información nutricional clara',
     details: [
-      'Criterios actualizados octubre 2025',
-      'Educación sobre sellos de advertencia',
-      'Comparación transparente de productos',
-      'Decisiones informadas'
+      'Sellos de advertencia en productos',
+      'Criterios actualizados 2025',
+      'Compara productos fácilmente',
+      'Toma decisiones informadas'
     ],
     color: 'from-orange-500 to-orange-600'
   },
   {
     icon: '🏫',
-    title: 'Lineamientos Escolares',
-    description: 'Cafeterías saludables',
+    title: 'Alimentación Escolar',
+    description: 'Opciones saludables en escuelas',
     details: [
-      'Sistema para escuelas (vigente marzo 2025)',
-      'Menús certificados saludables',
-      'Productos regionales en escuelas',
-      'Educación nutricional para niños'
+      'Guías para cafeterías escolares',
+      'Menús balanceados y nutritivos',
+      'Productos regionales disponibles',
+      'Educación nutricional infantil'
     ],
     color: 'from-blue-500 to-blue-600'
   }
@@ -68,17 +68,12 @@ const GovernmentSupport = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-3 bg-white rounded-full px-6 py-3 shadow-md mb-6">
-            <span className="text-3xl">🇲🇽</span>
-            <span className="font-bold text-gray-900">Para el Pueblo de México</span>
-          </div>
-
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Herramientas y Derechos para tu Salud
+            Recursos Disponibles en México
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Aprovecha las políticas públicas de nutrición y alimentación que son
-            <span className="font-semibold text-green-600"> tu derecho como mexicano</span>
+            Conoce las herramientas y programas que te ayudan a
+            <span className="font-semibold text-green-600"> tomar mejores decisiones alimentarias</span>
           </p>
         </motion.div>
 
