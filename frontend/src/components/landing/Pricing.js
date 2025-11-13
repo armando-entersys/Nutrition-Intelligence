@@ -154,110 +154,159 @@ const Pricing = () => {
           </motion.div>
         )}
 
-        {/* Nutritionists Plan - PROFESSIONAL */}
+        {/* Nutritionists Plans - 3 TIERS */}
         {activeTab === 'nutritionists' && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-4xl mx-auto"
+            className="max-w-7xl mx-auto"
           >
-            <div className="bg-gradient-to-br from-purple-50 to-white rounded-3xl shadow-2xl border-4 border-purple-500 p-10 relative overflow-hidden">
-              {/* Background decoration */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-100 rounded-full -mr-32 -mt-32 opacity-50" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-200 rounded-full -ml-24 -mb-24 opacity-50" />
-
-              <div className="relative">
-                {/* Professional Badge */}
-                <div className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-full mb-6 shadow-lg">
-                  <span className="text-2xl">👨‍⚕️</span>
-                  <span className="font-bold text-lg">PLAN PROFESIONAL</span>
-                </div>
-
-                <h3 className="text-4xl font-bold text-gray-900 mb-2">
-                  Para Nutriólogos y Profesionales
-                </h3>
-
-                {/* Pricing */}
-                <div className="mb-8">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-bold text-gray-900">$499</span>
-                    <span className="text-2xl text-gray-600">MXN/mes</span>
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* PLAN STARTER */}
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 hover:shadow-2xl transition relative">
+                <div className="mb-6">
+                  <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full mb-4">
+                    <span className="text-xl">🌱</span>
+                    <span className="font-bold text-sm">STARTER</span>
                   </div>
-                  <p className="text-lg text-gray-600 mt-2">
-                    Herramientas profesionales para gestionar tu práctica
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    Comienza tu Práctica
+                  </h3>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-4xl font-bold text-gray-900">$299</span>
+                    <span className="text-lg text-gray-600">MXN/mes</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Para nutriólogos iniciando su práctica
                   </p>
                 </div>
 
-                {/* Feature Grid */}
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
-                  {/* Column 1 */}
-                  <div className="space-y-4">
-                    <h4 className="font-bold text-lg text-purple-700 mb-3 flex items-center gap-2">
-                      <span className="text-2xl">💼</span>
-                      Gestión Profesional
-                    </h4>
-                    <FeatureItem text="Gestión de hasta 100 pacientes" purple />
-                    <FeatureItem text="Expediente clínico digital completo" purple />
-                    <FeatureItem text="Dashboard profesional avanzado" purple />
-                    <FeatureItem text="Planes de alimentación personalizados" purple />
-                    <FeatureItem text="Recordatorio 24 horas automatizado" purple />
-                    <FeatureItem text="Análisis antropométrico completo" purple />
-                    <FeatureItem text="Gráficas y reportes de progreso" purple />
-                  </div>
-
-                  {/* Column 2 */}
-                  <div className="space-y-4">
-                    <h4 className="font-bold text-lg text-purple-700 mb-3 flex items-center gap-2">
-                      <span className="text-2xl">🚀</span>
-                      Ventajas Profesionales
-                    </h4>
-                    <FeatureItem text="Marca blanca personalizable" purple />
-                    <FeatureItem text="Acceso API para integraciones" purple />
-                    <FeatureItem text="Sistema de roles y permisos" purple />
-                    <FeatureItem text="Capacitación inicial incluida" purple />
-                    <FeatureItem text="Soporte técnico dedicado 24/7" purple />
-                    <FeatureItem text="Actualizaciones prioritarias" purple />
-                    <FeatureItem text="Exportar todos los datos en PDF" purple />
-                  </div>
+                <div className="space-y-3 mb-8">
+                  <h4 className="font-semibold text-gray-900 text-sm mb-3">Funcionalidades incluidas:</h4>
+                  <FeatureItem text="Hasta 30 pacientes activos" compact />
+                  <FeatureItem text="Expediente clínico digital" compact />
+                  <FeatureItem text="Planes de alimentación personalizados" compact />
+                  <FeatureItem text="Recordatorio 24 horas" compact />
+                  <FeatureItem text="Análisis antropométrico básico" compact />
+                  <FeatureItem text="Gráficas de progreso" compact />
+                  <FeatureItem text="Sistema de citas (calendario básico)" compact />
+                  <FeatureItem text="Portal básico del paciente" compact />
+                  <FeatureItem text="Mensajería con pacientes" compact />
+                  <FeatureItem text="Plantillas de planes" compact />
+                  <FeatureItem text="Reportes en PDF" compact />
+                  <FeatureItem text="Soporte por email" compact />
                 </div>
 
-                {/* Professional Benefits */}
-                <div className="bg-white bg-opacity-80 rounded-xl p-6 mb-8 border-2 border-purple-200">
-                  <h4 className="font-bold text-lg text-gray-900 mb-3">
-                    ¿Por qué elegir nuestro plan profesional?
-                  </h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">✓</span>
-                      <span><strong>Ahorra tiempo:</strong> Automatiza seguimiento de pacientes y recordatorios</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">✓</span>
-                      <span><strong>Crece tu práctica:</strong> Herramientas profesionales al alcance de tu mano</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">✓</span>
-                      <span><strong>Basado en estándares mexicanos:</strong> NOM-051, SMAE, todo actualizado</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* CTA Button */}
                 <button
                   onClick={handleNutritionistDemo}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-5 rounded-xl
-                           font-bold text-xl transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1
-                           flex items-center justify-center gap-3"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg
+                           font-semibold transition shadow-md hover:shadow-lg"
                 >
-                  <span>Solicitar Demo Gratuita</span>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  Empezar Prueba Gratis
                 </button>
+                <p className="text-center text-gray-500 mt-3 text-xs">
+                  14 días gratis • Sin tarjeta
+                </p>
+              </div>
 
-                <p className="text-center text-gray-500 mt-4 text-sm">
-                  Prueba gratuita de 14 días • Cancela cuando quieras
+              {/* PLAN PROFESIONAL - HIGHLIGHTED */}
+              <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-2xl border-4 border-purple-500 p-8 relative transform md:scale-105">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-purple-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                    ⭐ MÁS POPULAR
+                  </div>
+                </div>
+
+                <div className="mb-6 mt-4">
+                  <div className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-full mb-4">
+                    <span className="text-xl">👨‍⚕️</span>
+                    <span className="font-bold text-sm">PROFESIONAL</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    Práctica Completa
+                  </h3>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-4xl font-bold text-gray-900">$699</span>
+                    <span className="text-lg text-gray-600">MXN/mes</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Para nutriólogos establecidos
+                  </p>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  <h4 className="font-semibold text-purple-900 text-sm mb-3">Todo de Starter, más:</h4>
+                  <FeatureItem text="Hasta 150 pacientes activos" purple compact />
+                  <FeatureItem text="Videoconsultas integradas" purple compact />
+                  <FeatureItem text="Sistema de cobro y facturación CFDI 4.0" purple compact />
+                  <FeatureItem text="Biblioteca de recetas mexicanas" purple compact />
+                  <FeatureItem text="Análisis avanzados e IA predictiva" purple compact />
+                  <FeatureItem text="Dashboard con KPIs profesionales" purple compact />
+                  <FeatureItem text="Calendario avanzado + recordatorios automáticos" purple compact />
+                  <FeatureItem text="Portal completo del paciente" purple compact />
+                  <FeatureItem text="Marca blanca personalizable" purple compact />
+                  <FeatureItem text="Integración con wearables" purple compact />
+                  <FeatureItem text="WhatsApp Business integration" purple compact />
+                  <FeatureItem text="Soporte prioritario 24/7" purple compact />
+                </div>
+
+                <button
+                  onClick={handleNutritionistDemo}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg
+                           font-semibold transition shadow-lg hover:shadow-xl"
+                >
+                  Solicitar Demo
+                </button>
+                <p className="text-center text-gray-500 mt-3 text-xs">
+                  14 días gratis • Cancela cuando quieras
+                </p>
+              </div>
+
+              {/* PLAN CLÍNICA */}
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 hover:shadow-2xl transition relative">
+                <div className="mb-6">
+                  <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-full mb-4">
+                    <span className="text-xl">🏢</span>
+                    <span className="font-bold text-sm">CLÍNICA</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    Equipos & Enterprise
+                  </h3>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-4xl font-bold text-gray-900">$1,499</span>
+                    <span className="text-lg text-gray-600">MXN/mes</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Para clínicas y equipos profesionales
+                  </p>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  <h4 className="font-semibold text-gray-900 text-sm mb-3">Todo de Profesional, más:</h4>
+                  <FeatureItem text="Pacientes ilimitados" compact amber />
+                  <FeatureItem text="Múltiples nutriólogos (hasta 10)" compact amber />
+                  <FeatureItem text="Sistema de equipos completo" compact amber />
+                  <FeatureItem text="Roles y permisos avanzados" compact amber />
+                  <FeatureItem text="Calendario compartido del equipo" compact amber />
+                  <FeatureItem text="Notas clínicas con IA" compact amber />
+                  <FeatureItem text="Transcripción automática de consultas" compact amber />
+                  <FeatureItem text="Generación de contenido con IA" compact amber />
+                  <FeatureItem text="Landing page personalizada" compact amber />
+                  <FeatureItem text="Marketing automation" compact amber />
+                  <FeatureItem text="API completa para integraciones" compact amber />
+                  <FeatureItem text="Gerente de cuenta dedicado" compact amber />
+                </div>
+
+                <button
+                  onClick={handleNutritionistDemo}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg
+                           font-semibold transition shadow-md hover:shadow-lg"
+                >
+                  Contactar Ventas
+                </button>
+                <p className="text-center text-gray-500 mt-3 text-xs">
+                  Demo personalizada • Onboarding incluido
                 </p>
               </div>
             </div>
@@ -274,9 +323,9 @@ const Pricing = () => {
         >
           <div className="text-center">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              ¿No estás seguro cuál es para ti?
+              ¿No estás seguro cuál plan elegir?
             </h3>
-            <div className="grid md:grid-cols-2 gap-6 text-left">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
               <div className="bg-green-50 rounded-lg p-6 border-2 border-green-200">
                 <h4 className="font-bold text-green-800 mb-2 flex items-center gap-2">
                   <span className="text-2xl">👤</span>
@@ -290,16 +339,42 @@ const Pricing = () => {
                 </ul>
               </div>
 
+              <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-200">
+                <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                  <span className="text-2xl">🌱</span>
+                  Plan Starter si:
+                </h4>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• Estás iniciando tu práctica como nutriólogo</li>
+                  <li>• Tienes hasta 30 pacientes</li>
+                  <li>• Necesitas herramientas básicas profesionales</li>
+                  <li>• Buscas una solución económica para comenzar</li>
+                </ul>
+              </div>
+
               <div className="bg-purple-50 rounded-lg p-6 border-2 border-purple-200">
                 <h4 className="font-bold text-purple-800 mb-2 flex items-center gap-2">
                   <span className="text-2xl">👨‍⚕️</span>
-                  Elige el plan Profesional si:
+                  Plan Profesional si:
                 </h4>
                 <ul className="space-y-2 text-gray-700 text-sm">
-                  <li>• Eres nutriólogo certificado</li>
-                  <li>• Gestionas múltiples pacientes</li>
-                  <li>• Necesitas expedientes clínicos digitales</li>
-                  <li>• Quieres herramientas profesionales avanzadas</li>
+                  <li>• Tienes una práctica establecida</li>
+                  <li>• Gestionas más de 30 pacientes</li>
+                  <li>• Necesitas videoconsultas y facturación</li>
+                  <li>• Quieres análisis avanzados e IA</li>
+                </ul>
+              </div>
+
+              <div className="bg-amber-50 rounded-lg p-6 border-2 border-amber-200">
+                <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
+                  <span className="text-2xl">🏢</span>
+                  Plan Clínica si:
+                </h4>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• Diriges una clínica o equipo de nutriólogos</li>
+                  <li>• Necesitas gestión multi-usuario</li>
+                  <li>• Requieres herramientas de IA avanzadas</li>
+                  <li>• Quieres marketing automation y API</li>
                 </ul>
               </div>
             </div>
@@ -339,21 +414,27 @@ const Pricing = () => {
 };
 
 // Helper Component for Feature Items
-const FeatureItem = ({ text, purple = false }) => (
-  <div className="flex items-start gap-3">
-    <svg
-      className={`w-6 h-6 flex-shrink-0 mt-0.5 ${purple ? 'text-purple-600' : 'text-green-600'}`}
-      fill="currentColor"
-      viewBox="0 0 20 20"
-    >
-      <path
-        fillRule="evenodd"
-        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-        clipRule="evenodd"
-      />
-    </svg>
-    <span className="text-gray-700 font-medium">{text}</span>
-  </div>
-);
+const FeatureItem = ({ text, purple = false, amber = false, compact = false }) => {
+  const iconColor = amber ? 'text-amber-600' : purple ? 'text-purple-600' : 'text-green-600';
+  const iconSize = compact ? 'w-5 h-5' : 'w-6 h-6';
+  const fontSize = compact ? 'text-sm' : 'font-medium';
+
+  return (
+    <div className="flex items-start gap-2">
+      <svg
+        className={`${iconSize} flex-shrink-0 mt-0.5 ${iconColor}`}
+        fill="currentColor"
+        viewBox="0 0 20 20"
+      >
+        <path
+          fillRule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+          clipRule="evenodd"
+        />
+      </svg>
+      <span className={`text-gray-700 ${fontSize}`}>{text}</span>
+    </div>
+  );
+};
 
 export default Pricing;
