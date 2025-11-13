@@ -4,6 +4,7 @@
  */
 import React, { useEffect } from 'react';
 import Hero from '../../components/landing/Hero';
+import GovernmentSupport from '../../components/landing/GovernmentSupport';
 import Features from '../../components/landing/Features';
 import HowItWorks from '../../components/landing/HowItWorks';
 import Pricing from '../../components/landing/Pricing';
@@ -41,7 +42,10 @@ const LandingPage = () => {
             </div>
 
             {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-6">
+              <a href="#government-support" className="text-gray-700 hover:text-green-600 transition">
+                Apoyo Gobierno
+              </a>
               <a href="#features" className="text-gray-700 hover:text-green-600 transition">
                 Características
               </a>
@@ -51,12 +55,15 @@ const LandingPage = () => {
               <a href="#pricing" className="text-gray-700 hover:text-green-600 transition">
                 Precios
               </a>
-              <a href="/auth/login" className="text-gray-700 hover:text-green-600 transition">
-                Iniciar Sesión
+              <a
+                href="/dashboard"
+                className="px-4 py-2 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition font-semibold"
+              >
+                Ingresar a la App
               </a>
               <a
                 href="/auth/register"
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold shadow-md"
               >
                 Empezar Gratis
               </a>
@@ -81,6 +88,9 @@ const LandingPage = () => {
           {/* Mobile Menu */}
           <div id="mobile-menu" className="hidden md:hidden pb-4">
             <div className="flex flex-col space-y-3">
+              <a href="#government-support" className="text-gray-700 hover:text-green-600 transition">
+                Apoyo Gobierno
+              </a>
               <a href="#features" className="text-gray-700 hover:text-green-600 transition">
                 Características
               </a>
@@ -90,8 +100,11 @@ const LandingPage = () => {
               <a href="#pricing" className="text-gray-700 hover:text-green-600 transition">
                 Precios
               </a>
-              <a href="/auth/login" className="text-gray-700 hover:text-green-600 transition">
-                Iniciar Sesión
+              <a
+                href="/dashboard"
+                className="px-6 py-2 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition font-semibold text-center"
+              >
+                Ingresar a la App
               </a>
               <a
                 href="/auth/register"
@@ -108,6 +121,11 @@ const LandingPage = () => {
       <div className="pt-16">
         {/* Hero Section */}
         <Hero />
+
+        {/* Government Support Section */}
+        <div id="government-support">
+          <GovernmentSupport />
+        </div>
 
         {/* Features Section */}
         <div id="features">

@@ -40,10 +40,18 @@ const Hero = () => {
               en México
             </h1>
 
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-600 mb-6">
               Escanea productos, crea planes de alimentación personalizados
               y consulta con IA. Todo basado en estándares mexicanos NOM-051 y SMAE.
             </p>
+
+            {/* Government Badge */}
+            <div className="mb-8 inline-flex items-center gap-2 bg-green-50 border-2 border-green-600 rounded-full px-4 py-2">
+              <span className="text-2xl">🇲🇽</span>
+              <span className="text-sm font-semibold text-green-800">
+                Apoyando iniciativas del Gobierno de México
+              </span>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button
