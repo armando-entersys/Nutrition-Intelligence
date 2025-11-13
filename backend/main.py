@@ -4,6 +4,8 @@ Nutrition Intelligence Platform - Main FastAPI Application
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from contextlib import asynccontextmanager
 import logging
 import time
@@ -12,6 +14,12 @@ import uuid
 from core.config import get_settings
 from core.database import init_db
 from core.logging import LoggingMiddleware, log_success, log_error
+from core.sentry import init_sentry
+from middleware.error_handler import (
+    http_exception_handler,
+    validation_exception_handler,
+    general_exception_handler
+)
 from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat, scanner, rag
 from api.routers import auth_new, auth_complete
 
@@ -23,6 +31,11 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Nutrition Intelligence Platform...")
     log_success("Sistema iniciando", business_context={"action": "system_startup"})
+
+    # Initialize Sentry
+    init_sentry()
+    log_success("Sentry inicializado", business_context={"action": "sentry_init"})
+
     await init_db()
     log_success("Base de datos inicializada", business_context={"action": "database_init"})
     yield
@@ -89,6 +102,11 @@ def create_application() -> FastAPI:
         
         return response
     
+    # Exception handlers
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, general_exception_handler)
+
     # Health check
     @app.get("/health")
     async def health_check():
@@ -97,7 +115,7 @@ def create_application() -> FastAPI:
             "service": "nutrition-intelligence-api",
             "version": "1.0.0"
         }
-    
+
     # Include routers
     app.include_router(auth_complete.router, prefix="/api/v1", tags=["authentication"])  # New complete auth system
     app.include_router(auth_simple.router, prefix="/api/v1/auth", tags=["auth"])
