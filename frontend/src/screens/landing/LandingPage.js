@@ -44,7 +44,7 @@ const LandingPage = () => {
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-6">
               <a href="#government-support" className="text-gray-700 hover:text-green-600 transition">
-                Apoyo Gobierno
+                Recursos
               </a>
               <a href="#features" className="text-gray-700 hover:text-green-600 transition">
                 Características
@@ -89,7 +89,7 @@ const LandingPage = () => {
           <div id="mobile-menu" className="hidden md:hidden pb-4">
             <div className="flex flex-col space-y-3">
               <a href="#government-support" className="text-gray-700 hover:text-green-600 transition">
-                Apoyo Gobierno
+                Recursos
               </a>
               <a href="#features" className="text-gray-700 hover:text-green-600 transition">
                 Características
