@@ -1,0 +1,25 @@
+# Nutrition Intelligence - robots.txt
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+Allow: /recipes
+Allow: /foods
+Allow: /blog
+
+# Disallow private pages
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+Disallow: /profile
+Disallow: /nutritionist/
+Disallow: /patient/
+
+# Disallow authentication pages
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Sitemap
+Sitemap: https://nutrition-intelligence.com/sitemap.xml
