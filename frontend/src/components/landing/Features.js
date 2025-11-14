@@ -9,7 +9,7 @@ const features = [
   {
     icon: '🔍',
     title: 'Escáner Inteligente NOM-051',
-    description: 'Escanea cualquier producto en segundos',
+    description: 'Fortaleciendo la soberanía alimentaria con cada elección',
     points: [
       'Lee códigos de barras automáticamente',
       'Analiza sellos de advertencia NOM-051',
@@ -45,7 +45,7 @@ const features = [
   {
     icon: '🍽️',
     title: 'Planes de Alimentación',
-    description: 'Crea tu plan con productos mexicanos de calidad',
+    description: 'Soberanía alimentaria en cada comida',
     points: [
       'Basado en Sistema SMAE',
       '56+ alimentos locales priorizados',
