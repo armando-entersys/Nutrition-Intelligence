@@ -4,12 +4,14 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including logrotate
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     libpq-dev \
     curl \
+    logrotate \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -21,8 +23,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directory for SQLite database (if using SQLite)
-RUN mkdir -p /app/data
+# Create directories for SQLite database and logs
+RUN mkdir -p /app/data /app/logs && \
+    chmod 755 /app/logs
+
+# Copy logrotate configuration
+COPY logrotate.conf /etc/logrotate.d/nutrition-intelligence
+RUN chmod 644 /etc/logrotate.d/nutrition-intelligence
 
 # Expose port
 EXPOSE 8000

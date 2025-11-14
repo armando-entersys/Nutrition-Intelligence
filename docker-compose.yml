@@ -23,6 +23,7 @@ services:
     volumes:
       - ./backend:/app
       - backend_data:/app/data
+      - backend_logs:/app/logs
     networks:
       - nutrition-network
       - traefik-public
@@ -130,6 +131,8 @@ services:
 volumes:
   backend_data:
     name: nutrition_intelligence_backend_data
+  backend_logs:
+    name: nutrition_intelligence_backend_logs
   postgres_data:
     name: nutrition_intelligence_postgres_data
   redis_data:

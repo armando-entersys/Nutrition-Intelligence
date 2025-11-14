@@ -1,10 +1,13 @@
 """
 Sistema de Logging Avanzado para Nutrition Intelligence
 Genera logs en formato JSON estructurado + formato legacy con pipes
+Enhanced with RotatingFileHandler for production use
 """
 import json
 import os
 import gzip
+import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, date
 from pathlib import Path
 import threading

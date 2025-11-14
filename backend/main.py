@@ -20,7 +20,7 @@ from middleware.error_handler import (
     validation_exception_handler,
     general_exception_handler
 )
-from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat, scanner, rag, medicinal_plants, admin_medicinal_plants
+from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat, scanner, rag, medicinal_plants, admin_medicinal_plants, logs
 from api.routers import auth_new, auth_complete
 
 logger = logging.getLogger(__name__)
@@ -165,6 +165,9 @@ def create_application() -> FastAPI:
 
     # Admin Medicinal Plants router - Seeding and management
     app.include_router(admin_medicinal_plants.router, prefix="/api/v1", tags=["admin", "medicinal-plants"])
+
+    # Frontend Logging router
+    app.include_router(logs.router, prefix="/api/v1", tags=["logs"])
 
     return app
 
