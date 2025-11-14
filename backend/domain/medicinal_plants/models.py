@@ -12,19 +12,30 @@ class PlantCategory(str, Enum):
     """Categories of medicinal plants by primary health benefit"""
     DIGESTIVE = "DIGESTIVE"  # Digestivas
     RESPIRATORY = "RESPIRATORY"  # Respiratorias
-    CALMING = "CALMING"  # Calm antes/Ansiedad
+    CALMING = "CALMING"  # Calmantes/Ansiedad
     METABOLIC = "METABOLIC"  # Metabólicas/Diabetes
     CIRCULATORY = "CIRCULATORY"  # Circulatorias
     ANTI_INFLAMMATORY = "ANTI_INFLAMMATORY"  # Antiinflamatorias
     IMMUNOLOGICAL = "IMMUNOLOGICAL"  # Inmunológicas
+    IMMUNE_SUPPORT = "IMMUNE_SUPPORT"  # Apoyo inmune
     DERMATOLOGICAL = "DERMATOLOGICAL"  # Para la piel
+    SKIN_HAIR = "SKIN_HAIR"  # Piel y cabello
     ANALGESIC = "ANALGESIC"  # Analgésicas
+    PAIN_RELIEF = "PAIN_RELIEF"  # Alivio del dolor
     GYNECOLOGICAL = "GYNECOLOGICAL"  # Ginecológicas
+    FEMALE_HEALTH = "FEMALE_HEALTH"  # Salud femenina
+    WOUND_HEALING = "WOUND_HEALING"  # Cicatrizantes
+    ANTISEPTIC = "ANTISEPTIC"  # Antisépticas
+    MEMORY_COGNITION = "MEMORY_COGNITION"  # Memoria y cognición
+    ANTIPARASITIC = "ANTIPARASITIC"  # Antiparasitarias
+    URINARY = "URINARY"  # Urinarias
     OTHER = "OTHER"
 
 class EvidenceLevel(str, Enum):
     """Scientific evidence level for medicinal plant efficacy"""
+    STRONG_EVIDENCE = "STRONG_EVIDENCE"  # Fuerte evidencia científica
     HIGH = "HIGH"  # Alta evidencia científica
+    MODERATE_EVIDENCE = "MODERATE_EVIDENCE"  # Evidencia moderada científica
     MODERATE = "MODERATE"  # Evidencia moderada / uso tradicional
     LOW = "LOW"  # Poca evidencia / usar con precaución
     TRADITIONAL_ONLY = "TRADITIONAL_ONLY"  # Solo uso tradicional documentado
@@ -49,6 +60,10 @@ class PreparationType(str, Enum):
     POWDER = "POWDER"  # Polvo
     BATH = "BATH"  # Baño
     INHALATION = "INHALATION"  # Inhalación/Vapor
+    TOPICAL = "TOPICAL"  # Uso tópico/externo
+    JUICE = "JUICE"  # Jugo
+    CAPSULE = "CAPSULE"  # Cápsulas
+    COMPRESS = "COMPRESS"  # Compresas
 
 class MedicinalPlant(SQLModel, table=True):
     """Mexican Medicinal Plant - Main model"""
