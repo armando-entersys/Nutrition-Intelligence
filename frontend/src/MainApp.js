@@ -44,6 +44,7 @@ import HelpButton from './components/common/HelpButton';
 import WelcomeTour from './components/common/WelcomeTour';
 import { API_BASE_URL, API_ENDPOINTS } from './config/api';
 import authService from './services/authService';
+import { MedicinalPlantsScreen } from './screens/medicinal-plants';
 
 // Motion components for animations
 const MotionBox = motion(Box);
@@ -166,6 +167,7 @@ function MainApp() {
       'analisis-fotos': 'Análisis de Fotos IA',
       gamificacion: 'Gamificación Mexicana',
       'chat-ia': 'Chat Nutriólogo Virtual',
+      'medicinal-plants': 'Plantas Medicinales Mexicanas',
       'admin-users': 'Gestión de Usuarios',
       'admin-roles': 'Roles y Permisos',
       'admin-views': 'Vistas por Rol',
@@ -320,6 +322,13 @@ function MainApp() {
         return (
           <Box sx={{ width: '100%' }}>
             <ChatNutriologoIA />
+          </Box>
+        );
+
+      case 'medicinal-plants':
+        return (
+          <Box sx={{ width: '100%' }}>
+            <MedicinalPlantsScreen />
           </Box>
         );
 

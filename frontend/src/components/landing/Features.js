@@ -19,6 +19,18 @@ const features = [
     gradient: 'from-blue-500 to-blue-600',
   },
   {
+    icon: '🌿',
+    title: 'Plantas Medicinales Mexicanas',
+    description: 'Descubre la medicina tradicional validada por UNAM',
+    points: [
+      '20+ plantas con evidencia científica',
+      'Métodos de preparación tradicionales',
+      'Información de seguridad y precauciones',
+      'Basado en el Atlas de UNAM',
+    ],
+    gradient: 'from-green-500 to-emerald-600',
+  },
+  {
     icon: '🤖',
     title: 'Nutricionista Virtual 24/7',
     description: 'Consulta con IA entrenada en nutrición',
@@ -78,7 +90,7 @@ const Features = () => {
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={index}

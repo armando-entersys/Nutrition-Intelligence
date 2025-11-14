@@ -48,6 +48,7 @@ import {
   BarChart as BarChartIcon,
   Storage as StorageIcon,
   EventNote as EventNoteIcon,
+  Spa as SpaIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -98,6 +99,7 @@ const Sidebar = ({ currentView, setCurrentView, isCollapsed, toggleSidebar, curr
         { id: 'foods', icon: RestaurantIcon, label: 'Alimentos', description: 'Base de datos', roles: ['nutritionist', 'admin'], color: theme.palette.success.main },
         { id: 'recipes', icon: MenuBookIcon, label: 'Recetas', description: 'Recetas y menús', roles: ['nutritionist', 'admin'], color: theme.palette.secondary.main },
         { id: 'equivalences', icon: SwapHorizIcon, label: 'Equivalencias', description: 'Sistema SMAE', roles: ['nutritionist', 'admin'], color: theme.palette.tertiary.main },
+        { id: 'medicinal-plants', icon: SpaIcon, label: 'Plantas Medicinales', description: 'Medicina tradicional mexicana', roles: ['nutritionist', 'patient', 'admin'], color: '#4CAF50', badge: 'NEW' },
       ]
     },
     {
