@@ -6,7 +6,7 @@ import sys
 from sqlmodel import SQLModel, create_engine
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Import all models to ensure they're registered
+# Import medicinal plants models to ensure they're registered
 from domain.medicinal_plants.models import (
     MedicinalPlant,
     UserPlantLog,
@@ -14,13 +14,6 @@ from domain.medicinal_plants.models import (
     HerbalShop,
     PlantRecommendation
 )
-
-# Import other domain models
-from domain.users.models import User
-from domain.foods.models import Food, FoodNutrition
-from domain.recipes.models import Recipe, RecipeIngredient
-from domain.meal_plans.models import MealPlan, MealPlanDay, DayMeal
-from domain.lab_data.models import LabResult, LabDataPoint
 
 from core.config import get_settings
 
