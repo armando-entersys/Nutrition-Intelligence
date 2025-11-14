@@ -82,10 +82,10 @@ const Pricing = () => {
                 </div>
 
                 <h3 className="text-4xl font-bold text-gray-900 mb-2">
-                  Red Social de Nutrición
+                  Calpulli de Nutrición
                 </h3>
                 <p className="text-xl text-gray-600 mb-8">
-                  Todo lo que necesitas para cuidar tu salud, conectar con otros y transformar tu alimentación
+                  Todo lo que necesitas para cuidar tu salud, conectar con tu comunidad y transformar tu alimentación
                 </p>
 
                 {/* Feature Grid */}
