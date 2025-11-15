@@ -118,7 +118,7 @@ def create_application() -> FastAPI:
 
     # Include routers
     app.include_router(auth_complete.router, prefix="/api/v1", tags=["authentication"])  # New complete auth system
-    app.include_router(auth_simple.router, prefix="/api/v1/auth", tags=["auth"])
+    # app.include_router(auth_simple.router, prefix="/api/v1/auth", tags=["auth"])  # Disabled - conflicts with auth_complete
     app.include_router(auth_new.router, prefix="/api/v1/auth-hybrid", tags=["auth-hybrid"])
     app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
     app.include_router(foods.router, prefix="/api/v1/foods", tags=["foods"])
