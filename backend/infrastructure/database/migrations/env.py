@@ -17,6 +17,8 @@ from domain.patients.models import Patient, AnthropometricRecord, MedicalHistory
 from domain.nutritionists.models import Nutritionist, Consultation, NutritionistAvailability
 from domain.foods.models import Food, FoodEquivalent, NutritionalGoal
 from domain.recipes.models import Recipe, RecipeItem, MealPlan, MealEntry, RecipeRating
+from domain.trophology.models import FoodCategory, FoodCompatibility
+from domain.fasting.models import FastingWindow, FastingLog
 
 # Import SQLModel for metadata
 from sqlmodel import SQLModel
