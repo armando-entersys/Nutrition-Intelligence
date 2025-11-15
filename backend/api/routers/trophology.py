@@ -7,7 +7,7 @@ from sqlmodel import Session
 from typing import List
 from pydantic import BaseModel, Field
 
-from core.database import get_db
+from core.database import get_async_session
 from services.trophology.trophology_service import TrophologyService
 from domain.trophology.models import FoodCategory, FoodCompatibility
 
@@ -68,7 +68,7 @@ class CompatibilitiesForCategoryResponse(BaseModel):
     description="Obtiene las 9 categorías de alimentos según la Trofología de Lezaeta"
 )
 async def get_categories(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_async_session)
 ):
     """
     Obtiene todas las categorías de alimentos según Lezaeta:
@@ -105,7 +105,7 @@ async def get_categories(
 )
 async def get_category(
     category_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_async_session)
 ):
     """Obtiene una categoría específica por ID"""
     service = TrophologyService(db)
@@ -133,7 +133,7 @@ async def get_category(
 )
 async def get_compatibilities_for_category(
     category_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_async_session)
 ):
     """
     Obtiene todas las categorías compatibles e incompatibles
@@ -187,7 +187,7 @@ async def get_compatibilities_for_category(
 )
 async def validate_combination(
     request: ValidateCombinationRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_async_session)
 ):
     """
     Valida una combinación de alimentos según las reglas de Lezaeta
@@ -229,7 +229,7 @@ async def validate_combination(
     description="Obtiene todas las reglas de compatibilidad/incompatibilidad entre categorías"
 )
 async def get_all_compatibility_rules(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_async_session)
 ):
     """
     Obtiene todas las reglas de compatibilidad
@@ -271,7 +271,7 @@ async def get_all_compatibility_rules(
 )
 async def search_food(
     q: str = Field(..., description="Nombre del alimento a buscar (ej: 'naranja', 'papa', 'nuez')"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_async_session)
 ):
     """
     Busca a qué categoría(s) pertenece un alimento
