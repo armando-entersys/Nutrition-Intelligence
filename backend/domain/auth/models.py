@@ -205,18 +205,29 @@ class UserRoleAssignment(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[UserRoleAssignment.user_id]"}
     )
 
+class TokenStatus(str, Enum):
+    """Estado del token"""
+    ACTIVE = "active"
+    USED = "used"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
+
 class PasswordResetToken(SQLModel, table=True):
     """Tokens para recuperación de contraseña"""
     __tablename__ = "password_reset_tokens"
-    
+
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="auth_users.id", index=True)
-    
+    email: str = Field(index=True, max_length=255)
+
     token: str = Field(unique=True, index=True, max_length=255)
+    status: str = Field(default="active", max_length=20)
     expires_at: datetime
-    is_used: bool = Field(default=False)
     used_at: Optional[datetime] = Field(default=None)
-    
+
+    ip_address: Optional[str] = Field(default=None, max_length=45)
+    user_agent: Optional[str] = Field(default=None, max_length=500)
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class EmailVerificationToken(SQLModel, table=True):
