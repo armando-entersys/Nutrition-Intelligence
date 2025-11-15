@@ -193,7 +193,14 @@ async def register(
             )
 
         # Verify it's actually a nutritionist
-        if nutritionist.primary_role != UserRole.NUTRITIONIST and UserRole.NUTRITIONIST not in nutritionist.secondary_roles:
+        # Handle both enum and string values in secondary_roles (due to JSON serialization)
+        has_nutritionist_role = (
+            nutritionist.primary_role == UserRole.NUTRITIONIST or
+            UserRole.NUTRITIONIST in nutritionist.secondary_roles or
+            "NUTRITIONIST" in nutritionist.secondary_roles or
+            "nutritionist" in nutritionist.secondary_roles
+        )
+        if not has_nutritionist_role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="El email proporcionado no corresponde a un nutriólogo registrado"
@@ -483,7 +490,14 @@ async def validate_nutritionist_email(
         )
 
     # Check if user is a nutritionist
-    if user.primary_role != UserRole.NUTRITIONIST and UserRole.NUTRITIONIST not in user.secondary_roles:
+    # Handle both enum and string values in secondary_roles (due to JSON serialization)
+    has_nutritionist_role = (
+        user.primary_role == UserRole.NUTRITIONIST or
+        UserRole.NUTRITIONIST in user.secondary_roles or
+        "NUTRITIONIST" in user.secondary_roles or
+        "nutritionist" in user.secondary_roles
+    )
+    if not has_nutritionist_role:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Este email no corresponde a un nutriólogo registrado"
