@@ -2,7 +2,7 @@
 Trophology API endpoints
 Food combination validation based on Lezaeta's principles
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session
 from typing import List
 from pydantic import BaseModel, Field
@@ -270,7 +270,7 @@ async def get_all_compatibility_rules(
     description="Busca a qué categoría pertenece un alimento específico"
 )
 async def search_food(
-    q: str = Field(..., description="Nombre del alimento a buscar (ej: 'naranja', 'papa', 'nuez')"),
+    q: str = Query(..., description="Nombre del alimento a buscar (ej: 'naranja', 'papa', 'nuez')"),
     db: Session = Depends(get_async_session)
 ):
     """
