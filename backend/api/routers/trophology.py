@@ -83,8 +83,10 @@ async def get_categories(
     8. Azúcares
     9. Grasas
     """
-    service = TrophologyService(db)
-    categories = service.get_all_categories()
+    from sqlmodel import select
+    statement = select(FoodCategory)
+    result = await db.execute(statement)
+    categories = result.scalars().all()
 
     return [
         CategoryResponse(
@@ -108,8 +110,7 @@ async def get_category(
     db: Session = Depends(get_async_session)
 ):
     """Obtiene una categoría específica por ID"""
-    service = TrophologyService(db)
-    category = service.get_category_by_id(category_id)
+    category = await db.get(FoodCategory, category_id)
 
     if not category:
         raise HTTPException(
