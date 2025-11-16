@@ -53,6 +53,20 @@ const Hero = () => {
               </span>
             </div>
 
+            {/* Los 4 Acuerdos Badge */}
+            <div className="mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-xl px-5 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">🌟</span>
+                <span className="text-sm font-bold text-purple-900">
+                  Diseñado con Los 4 Acuerdos
+                </span>
+              </div>
+              <p className="text-xs text-purple-700 leading-relaxed">
+                Una plataforma que honra la sabiduría mexicana: comunicación clara,
+                respeto mutuo, transparencia y excelencia en cada interacción.
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
               <button
                 onClick={handleGetStarted}
