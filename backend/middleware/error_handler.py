@@ -101,7 +101,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
     logger.warning(
-        f"Validation error on {request.method} {request.url.path}",
+        f"Validation error on {request.method} {request.url.path}: {errors}",
         extra={"errors": errors}
     )
 
