@@ -48,7 +48,10 @@ def create_access_token(user: AuthUser, expires_delta: Optional[timedelta] = Non
         "email": user.email,
         "username": user.username,
         "primary_role": user.primary_role.value,
-        "secondary_roles": [role.value for role in user.secondary_roles],
+        "secondary_roles": [
+            role if isinstance(role, str) else role.value
+            for role in user.secondary_roles
+        ],
         "exp": expire,
         "type": "access"
     }
