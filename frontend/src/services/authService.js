@@ -21,7 +21,13 @@ class AuthService {
    */
   async register(userData) {
     try {
-      const response = await axios.post(`${AUTH_ENDPOINT}/register`, userData);
+      // Clean up data: remove nutritionist_email if empty
+      const cleanedData = { ...userData };
+      if (!cleanedData.nutritionist_email || cleanedData.nutritionist_email.trim() === '') {
+        delete cleanedData.nutritionist_email;
+      }
+
+      const response = await axios.post(`${AUTH_ENDPOINT}/register`, cleanedData);
       return response.data;
     } catch (error) {
       throw this.handleError(error);
