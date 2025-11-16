@@ -56,7 +56,7 @@ const Hero = () => {
             {/* Mexican Wisdom Badge */}
             <div className="mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-xl px-5 py-3">
               <p className="text-xs text-purple-700 leading-relaxed">
-                Una plataforma que honra la sabiduría mexicana: comunicación clara,
+                🌟 Una plataforma que honra la sabiduría mexicana: comunicación clara,
                 respeto mutuo, transparencia y excelencia en cada interacción.
               </p>
             </div>
