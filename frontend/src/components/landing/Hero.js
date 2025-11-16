@@ -108,7 +108,7 @@ const Hero = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Sin tarjeta de crédito</span>
+                <span>Fácil de usar</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg
