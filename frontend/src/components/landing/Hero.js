@@ -47,7 +47,7 @@ const Hero = () => {
 
             {/* Mexican Food Sovereignty Badge */}
             <div className="mb-6 inline-flex items-center gap-2 bg-green-50 border-2 border-green-600 rounded-full px-4 py-2">
-              <span className="text-2xl">🇲🇽</span>
+              <span className="text-2xl">🌮</span>
               <span className="text-sm font-semibold text-green-800">
                 Promoviendo la soberanía alimentaria mexicana
               </span>
