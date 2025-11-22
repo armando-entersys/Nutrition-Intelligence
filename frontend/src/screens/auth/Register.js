@@ -379,23 +379,31 @@ const Register = () => {
                     }
                   }}>
                   <FormControl fullWidth margin="normal" size="medium">
-                    <InputLabel id="role-label">I am registering as</InputLabel>
+                    <InputLabel id="role-label">Me registro como</InputLabel>
                     <Select
                       labelId="role-label"
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
                       disabled={loading}
-                      label="I am registering as"
+                      label="Me registro como"
                     >
                       <MenuItem value="patient">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Person /> Patient - Looking for nutritional guidance
+                          <Person sx={{ color: '#667eea' }} />
+                          <Box>
+                            <Typography variant="body1" fontWeight="600">Paciente</Typography>
+                            <Typography variant="caption" color="text.secondary">Busco guía nutricional</Typography>
+                          </Box>
                         </Box>
                       </MenuItem>
                       <MenuItem value="nutritionist">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocalHospital /> Nutritionist - Professional account
+                          <LocalHospital sx={{ color: '#4caf50' }} />
+                          <Box>
+                            <Typography variant="body1" fontWeight="600">Nutriólogo</Typography>
+                            <Typography variant="caption" color="text.secondary">Cuenta profesional</Typography>
+                          </Box>
                         </Box>
                       </MenuItem>
                     </Select>
