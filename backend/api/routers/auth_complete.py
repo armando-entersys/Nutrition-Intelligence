@@ -239,6 +239,24 @@ async def register(
 
     log_success(f"New user registered: {new_user.email} ({new_user.primary_role})")
 
+    # Send welcome email
+    try:
+        user_name = new_user.first_name or new_user.username
+        email_sent = email_service.send_welcome_email(
+            to_email=new_user.email,
+            user_name=user_name
+        )
+        
+        if email_sent:
+            log_success(f"Welcome email sent to: {new_user.email}")
+        else:
+            log_error(f"Failed to send welcome email to: {new_user.email}")
+            
+    except Exception as e:
+        log_error(f"Error sending welcome email: {str(e)}")
+        # Continue registration even if email fails
+
+
     return UserResponse(
         id=new_user.id,
         email=new_user.email,
