@@ -256,7 +256,7 @@ Nutrition Intelligence
                             <table role="presentation" style="width: 100%; border-collapse: collapse;">
                                 <tr>
                                     <td align="center">
-                                        <a href="{self.app_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                                        <a href="{self.app_url}/dashboard" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600;">
                                             Comenzar Ahora
                                         </a>
                                     </td>
