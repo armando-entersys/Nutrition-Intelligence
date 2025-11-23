@@ -272,7 +272,7 @@ function MainApp() {
           return null;
         }
         return (
-          <Box sx={{ width: '100%' }}>
+          <Box sx={{ width: '100%', minHeight: '80vh' }}>
             <ExpedienteClinico />
           </Box>
         );
