@@ -45,6 +45,8 @@ import WelcomeTour from './components/common/WelcomeTour';
 import { API_BASE_URL, API_ENDPOINTS } from './config/api';
 import authService from './services/authService';
 import { MedicinalPlantsScreen } from './screens/medicinal-plants';
+import UserMenu from './components/common/UserMenu';
+import ProfilePage from './components/profile/ProfilePage';
 
 // Motion components for animations
 const MotionBox = motion(Box);
@@ -332,6 +334,23 @@ function MainApp() {
           </Box>
         );
 
+      case 'profile':
+        return (
+          <Box sx={{ width: '100%' }}>
+            <ProfilePage currentUser={currentUser} />
+          </Box>
+        );
+
+      case 'settings':
+        return (
+          <Box sx={{ width: '100%', p: 3 }}>
+            <Typography variant="h4">⚙️ Configuración</Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+              Configuraciones del sistema (próximamente)
+            </Typography>
+          </Box>
+        );
+
       case 'admin-users':
         if (currentRole !== 'admin') {
           setCurrentView('dashboard');
@@ -545,99 +564,99 @@ function MainApp() {
               {/* Admin Links Card - SOLO ADMIN */}
               {currentRole === 'admin' && (
                 <Grid item xs={12} md={6}>
-                <MotionCard
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  elevation={2}
-                >
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom color="primary" fontWeight={600}>
-                      Enlaces de Administración
-                    </Typography>
-                    <Grid container spacing={2} sx={{ mt: 1 }}>
-                      <Grid item xs={12}>
-                        <MuiLink
-                          href={API_ENDPOINTS.DOCS}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ textDecoration: 'none' }}
-                        >
-                          <Card
-                            sx={{
-                              bgcolor: 'primary.main',
-                              color: 'white',
-                              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                              '&:hover': {
-                                transform: 'translateY(-4px)',
-                                boxShadow: 6
-                              }
-                            }}
+                  <MotionCard
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    elevation={2}
+                  >
+                    <CardContent>
+                      <Typography variant="h5" gutterBottom color="primary" fontWeight={600}>
+                        Enlaces de Administración
+                      </Typography>
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={12}>
+                          <MuiLink
+                            href={API_ENDPOINTS.DOCS}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ textDecoration: 'none' }}
                           >
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <Typography variant="body1" fontWeight={500}>
-                                📚 API Docs (FastAPI)
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        </MuiLink>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <MuiLink
-                          href="http://localhost:9001"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ textDecoration: 'none' }}
-                        >
-                          <Card
-                            sx={{
-                              bgcolor: 'secondary.main',
-                              color: 'white',
-                              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                              '&:hover': {
-                                transform: 'translateY(-4px)',
-                                boxShadow: 6
-                              }
-                            }}
+                            <Card
+                              sx={{
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                '&:hover': {
+                                  transform: 'translateY(-4px)',
+                                  boxShadow: 6
+                                }
+                              }}
+                            >
+                              <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                                <Typography variant="body1" fontWeight={500}>
+                                  📚 API Docs (FastAPI)
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </MuiLink>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <MuiLink
+                            href="http://localhost:9001"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ textDecoration: 'none' }}
                           >
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <Typography variant="body1" fontWeight={500}>
-                                🗂️ MinIO Console
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        </MuiLink>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <MuiLink
-                          href="http://localhost:5050"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ textDecoration: 'none' }}
-                        >
-                          <Card
-                            sx={{
-                              bgcolor: 'tertiary.main',
-                              color: 'white',
-                              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                              '&:hover': {
-                                transform: 'translateY(-4px)',
-                                boxShadow: 6
-                              }
-                            }}
+                            <Card
+                              sx={{
+                                bgcolor: 'secondary.main',
+                                color: 'white',
+                                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                '&:hover': {
+                                  transform: 'translateY(-4px)',
+                                  boxShadow: 6
+                                }
+                              }}
+                            >
+                              <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                                <Typography variant="body1" fontWeight={500}>
+                                  🗂️ MinIO Console
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </MuiLink>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <MuiLink
+                            href="http://localhost:5050"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ textDecoration: 'none' }}
                           >
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <Typography variant="body1" fontWeight={500}>
-                                🐘 PgAdmin
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        </MuiLink>
+                            <Card
+                              sx={{
+                                bgcolor: 'tertiary.main',
+                                color: 'white',
+                                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                '&:hover': {
+                                  transform: 'translateY(-4px)',
+                                  boxShadow: 6
+                                }
+                              }}
+                            >
+                              <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                                <Typography variant="body1" fontWeight={500}>
+                                  🐘 PgAdmin
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </MuiLink>
+                        </Grid>
                       </Grid>
-                    </Grid>
-                  </CardContent>
-                </MotionCard>
-              </Grid>
+                    </CardContent>
+                  </MotionCard>
+                </Grid>
               )}
 
               {/* Real-Time Monitor - SOLO ADMIN */}
@@ -851,38 +870,14 @@ function MainApp() {
                   {/* Help Button */}
                   <HelpButton />
 
-                  {/* User Info */}
-                  <Chip
-                    avatar={<Avatar sx={{ width: { xs: 28, md: 32 }, height: { xs: 28, md: 32 } }}>👤</Avatar>}
-                    label={currentUser?.username || 'Usuario'}
-                    color="primary"
-                    sx={{
-                      px: { xs: 0.5, md: 1 },
-                      height: { xs: 40, md: 44 },
-                      fontSize: { xs: '0.75rem', md: '0.875rem' },
-                      fontWeight: 600,
-                      boxShadow: 2,
-                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: 4,
-                      },
-                      display: { xs: 'none', sm: 'flex' },
-                    }}
+                  {/* User Menu */}
+                  <UserMenu
+                    currentUser={currentUser}
+                    onNavigate={setCurrentView}
+                    onLogout={handleLogout}
                   />
 
-                  {/* Logout Button */}
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<LogoutIcon />}
-                    onClick={handleLogout}
-                    sx={{
-                      display: { xs: 'none', md: 'flex' }
-                    }}
-                  >
-                    Salir
-                  </Button>
+                  {/* Logout Button - Hide since it's in UserMenu now */}
                   <IconButton
                     color="error"
                     onClick={handleLogout}
