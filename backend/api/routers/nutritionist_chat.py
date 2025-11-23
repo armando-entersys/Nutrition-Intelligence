@@ -2,15 +2,22 @@
 AI Nutritionist Chat API Router
 Provides conversational AI nutritionist support using Gemini/Claude
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import logging
 import os
 import google.generativeai as genai
 from anthropic import Anthropic
 from dotenv import load_dotenv
+from sqlmodel import Session, select
+
+from core.auth import get_current_user
+from domain.auth.models import AuthUser
+from domain.patients.models import Patient, MedicalHistory, AnthropometricRecord
+from domain.medicinal_plants.models import MedicinalPlant
+from core.database import get_async_session
 
 load_dotenv()
 
@@ -107,7 +114,11 @@ Responde siempre en español de México, siendo empático, educativo y práctico
 """
 
 
-async def generate_chat_response(user_message: str, conversation_history: List[ChatMessage] = None) -> dict:
+async def generate_chat_response(
+    user_message: str, 
+    conversation_history: List[ChatMessage] = None,
+    user_context: Dict[str, Any] = None
+) -> dict:
     """
     Generate chat response using Gemini or Claude AI
 
@@ -125,8 +136,12 @@ async def generate_chat_response(user_message: str, conversation_history: List[C
         # Try Gemini first if available
         if gemini_model:
             try:
-                # Build conversation for Gemini
-                chat_messages = [NUTRITIONIST_SYSTEM_PROMPT]
+                # Build conversation for Gemini with personalized context
+                base_prompt = NUTRITIONIST_SYSTEM_PROMPT
+                if user_context:
+                    base_prompt = build_personalized_prompt(base_prompt, user_context)
+                
+                chat_messages = [base_prompt]
 
                 # Add conversation history
                 for msg in conversation_history[-5:]:  # Last 5 messages for context
@@ -175,11 +190,15 @@ async def generate_chat_response(user_message: str, conversation_history: List[C
                     "content": user_message
                 })
 
-                # Generate response
+                # Generate response with personalized system prompt
+                system_prompt = NUTRITIONIST_SYSTEM_PROMPT
+                if user_context:
+                    system_prompt = build_personalized_prompt(system_prompt, user_context)
+                
                 response = anthropic_client.messages.create(
                     model="claude-3-5-sonnet-20241022",
                     max_tokens=1024,
-                    system=NUTRITIONIST_SYSTEM_PROMPT,
+                    system=system_prompt,
                     messages=messages
                 )
 
@@ -201,7 +220,7 @@ async def generate_chat_response(user_message: str, conversation_history: List[C
 
         # Fallback response if no AI available
         logger.warning("No AI models available for chat. Using fallback response.")
-        return get_fallback_response(user_message)
+        return get_fallback_response(user_message, user_context)
 
     except Exception as e:
         logger.error(f"Error generating chat response: {e}")
@@ -246,7 +265,164 @@ def extract_tags_from_response(user_message: str, response: str) -> List[str]:
     return tags
 
 
-def get_fallback_response(user_message: str) -> dict:
+async def get_user_context(user: AuthUser, session: Session) -> Dict[str, Any]:
+    """
+    Fetch comprehensive user context for personalized chat responses
+    
+    Returns:
+        Dictionary with patient data, meal plans, allergies, goals, medicinal plants
+    """
+    context = {
+        "user_name": user.username,
+        "user_email": user.email,
+        "has_patient_profile": False,
+        "patient_data": None,
+        "medical_history": None,
+        "latest_measurements": None,
+        "medicinal_plants_summary": None
+    }
+    
+    try:
+        # Check if user has a patient profile
+        statement = select(Patient).where(Patient.user_id == user.id)
+        result = await session.exec(statement)
+        patient = result.first()
+        
+        if patient:
+            context["has_patient_profile"] = True
+            context["patient_data"] = {
+                "age": patient.current_age,
+                "gender": patient.gender.value,
+                "primary_goal": patient.primary_goal,
+                "target_weight_kg": patient.target_weight_kg,
+                "activity_level": patient.activity_level.value,
+                "occupation": patient.occupation
+            }
+            
+            # Fetch medical history
+            med_history_stmt = select(MedicalHistory).where(MedicalHistory.patient_id == patient.id)
+            med_result = await session.exec(med_history_stmt)
+            medical_history = med_result.first()
+            
+            if medical_history:
+                context["medical_history"] = {
+                    "allergies": medical_history.allergies or [],
+                    "intolerances": medical_history.intolerances or [],
+                    "conditions": medical_history.conditions or [],
+                    "food_aversions": medical_history.food_aversions or [],
+                    "dietary_restrictions": medical_history.dietary_restrictions or [],
+                    "eating_preferences": medical_history.eating_preferences or []
+                }
+            
+            # Fetch latest anthropometric measurements
+            anthro_stmt = (select(AnthropometricRecord)
+                          .where(AnthropometricRecord.patient_id == patient.id)
+                          .order_by(AnthropometricRecord.measurement_date.desc())
+                          .limit(1))
+            anthro_result = await session.exec(anthro_stmt)
+            latest_measurement = anthro_result.first()
+            
+            if latest_measurement:
+                context["latest_measurements"] = {
+                    "weight_kg": latest_measurement.weight_kg,
+                    "height_cm": latest_measurement.height_cm,
+                    "bmi": latest_measurement.bmi,
+                    "waist_cm": latest_measurement.waist_cm,
+                    "body_fat_pct": latest_measurement.body_fat_pct,
+                    "measurement_date": latest_measurement.measurement_date.isoformat()
+                }
+        
+        # Fetch medicinal plants information (top featured plants)
+        plants_stmt = (select(MedicinalPlant)
+                      .where(MedicinalPlant.is_active == True)
+                      .order_by(MedicinalPlant.featured.desc(), MedicinalPlant.view_count.desc())
+                      .limit(10))
+        plants_result = await session.exec(plants_stmt)
+        featured_plants = plants_result.all()
+        
+        if featured_plants:
+            context["medicinal_plants_summary"] = [
+                {
+                    "scientific_name": plant.scientific_name,
+                    "popular_names": plant.popular_names[:2] if plant.popular_names else [],
+                    "primary_use": plant.primary_category.value,
+                    "traditional_uses": plant.traditional_uses[:3] if plant.traditional_uses else [],
+                    "safety_level": plant.safety_level.value
+                }
+                for plant in featured_plants
+            ]
+        
+        logger.info(f"Context loaded for user {user.id}: Patient profile={context['has_patient_profile']}")
+        
+    except Exception as e:
+        logger.error(f"Error fetching user context: {e}")
+        # Return partial context even if some queries fail
+    
+    return context
+
+
+def build_personalized_prompt(base_prompt: str, user_context: Dict[str, Any]) -> str:
+    """
+    Build a personalized system prompt incorporating user context
+    """
+    personalization = "\n\n---\n\n"
+    
+    if user_context.get("has_patient_profile") and user_context.get("patient_data"):
+        patient = user_context["patient_data"]
+        personalization += f"""✨ CONTEXTO DEL PACIENTE ACTUAL:
+
+DATO
+
+S PERSONALES:
+- Edad: {patient.get('age', 'N/A')} años
+- Género: {patient.get('gender', 'N/A')}
+- Objetivo principal: {patient.get('primary_goal', 'No especificado')}
+- Peso objetivo: {patient.get('target_weight_kg', 'No especificado')} kg
+- Nivel de actividad: {patient.get('activity_level', 'No especificado')}
+"""
+        
+        # Add medical history if available
+        if user_context.get("medical_history"):
+            med = user_context["medical_history"]
+            if med.get("allergies"):
+                personalization += f"\n⚠️ ALERGIAS: {', '.join(med['allergies'])}"
+            if med.get("intolerances"):
+                personalization += f"\n⚠️ INTOLERANCIAS: {', '.join(med['intolerances'])}"
+            if med.get("dietary_restrictions"):
+                personalization += f"\n⚠️ RESTRICCIONES DIETÉTICAS: {', '.join(med['dietary_restrictions'])}"
+            if med.get("food_aversions"):
+                personalization += f"\n❌ ALIMENTOS QUE NO LE GUSTAN: {', '.join(med['food_aversions'])}"
+            if med.get("eating_preferences"):
+                personalization += f"\n✅ PREFERENCIAS: {', '.join(med['eating_preferences'])}"
+        
+        # Add latest measurements
+        if user_context.get("latest_measurements"):
+            meas = user_context["latest_measurements"]
+            personalization += f"""\n\nMEDICIONES ACTUALES:
+- Peso: {meas.get('weight_kg', 'N/A')} kg
+- IMC: {meas.get('bmi', 'N/A')}
+- Fecha de medición: {meas.get('measurement_date', 'N/A')}
+"""
+    
+    # Add medicinal plants knowledge
+    if user_context.get("medicinal_plants_summary"):
+        plants = user_context["medicinal_plants_summary"]
+        personalization += "\n\n🌿 PLANTAS MEDICINALES MEXICANAS DISPONIBLES:\n"
+        for plant in plants[:5]:  # Top 5 most relevant
+            names = ', '.join(plant.get('popular_names', []))
+            uses = ', '.join(plant.get('traditional_uses', [])[:2])
+            personalization += f"- {names}: Usos: {uses}\n"
+    
+    personalization += "\n\n---\n\nINSTRUCCIÓN IMPORTANTE:\n"
+    personalization += "Personaliza tus respuestas basándote en el contexto del paciente.\n"
+    personalization += "Respeta sus alergias, intolerancias y restricciones dietéticas.\n"
+    personalization += "Sugiere plantas medicinales cuando sea apropiado y seguro.\n"
+    personalization += "Usa un tono amigable, empático y profesional.\n"
+    
+    return base_prompt + personalization
+
+
+def get_fallback_response(user_message: str, user_context: Dict[str, Any] = None) -> dict:
     """Provide intelligent fallback response when AI is not available"""
     lower_message = user_message.lower()
 
@@ -328,14 +504,36 @@ def get_fallback_response(user_message: str) -> dict:
         }
 
     # Generic response (solo si no coincide con ninguno anterior)
+    # Personalize if we have user context
+    base_response = "🩺 **Consulta Nutricional**\n\nEstoy aquí para ayudarte con tus dudas sobre nutrición."
+    
+    if user_context and user_context.get("has_patient_profile") and user_context.get("patient_data"):
+        goal = user_context["patient_data"].get("primary_goal", "")
+        if goal:
+            base_response += f" Veo que tu objetivo es: **{goal}**."
+    
+    base_response += "\n\nPuedo ayudarte con:\n\n"
+    base_response += "• **Análisis de alimentos mexicanos** y sus valores nutricionales\n"
+    base_response += "• **Equivalencias SMAE** para planificar comidas balanceadas\n"
+    base_response += "• **Interpretación de etiquetas** y sellos NOM-051\n"
+    base_response += "• **Recetas saludables** con ingredientes mexicanos\n"
+    base_response += "• **Control de peso** y hábitos saludables\n"
+    base_response += "• **Manejo nutricional** de diabetes e hipertensión\n"
+    base_response += "• **Plantas medicinales mexicanas** y remedios tradicionales\n"
+    base_response += "\nPara brindarte la mejor asesoría, por favor cuéntame más específicamente sobre tu consulta o inquietud nutricional."
+    
     return {
-        "response": "🩺 **Consulta Nutricional**\n\nEstoy aquí para ayudarte con tus dudas sobre nutrición. Puedo ayudarte con:\n\n• **Análisis de alimentos mexicanos** y sus valores nutricionales\n• **Equivalencias SMAE** para planificar comidas balanceadas\n• **Interpretación de etiquetas** y sellos NOM-051\n• **Recetas saludables** con ingredientes mexicanos\n• **Control de peso** y hábitos saludables\n• **Manejo nutricional** de diabetes e hipertensión\n\nPara brindarte la mejor asesoría, por favor cuéntame más específicamente sobre tu consulta o inquietud nutricional.",
+        "response": base_response,
         "tags": ['consulta_general']
     }
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def nutritionist_chat(request: ChatRequest):
+async def nutritionist_chat(
+    request: ChatRequest,
+    current_user: AuthUser = Depends(get_current_user),
+    session: Session = Depends(get_async_session)
+):
     """
     Chat with AI Nutritionist
 
@@ -352,11 +550,15 @@ async def nutritionist_chat(request: ChatRequest):
     - Meal planning
     """
     try:
-        logger.info(f"Processing nutritionist chat request: {request.message[:50]}...")
-
+        logger.info(f"Processing nutritionist chat request from user {current_user.id}: {request.message[:50]}...")
+        
+        # Fetch user context for personalization
+        user_context = await get_user_context(current_user, session)
+        
         result = await generate_chat_response(
             user_message=request.message,
-            conversation_history=request.conversation_history
+            conversation_history=request.conversation_history,
+            user_context=user_context
         )
 
         return JSONResponse(
