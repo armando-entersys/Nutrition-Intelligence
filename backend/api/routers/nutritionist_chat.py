@@ -247,22 +247,87 @@ def extract_tags_from_response(user_message: str, response: str) -> List[str]:
 
 
 def get_fallback_response(user_message: str) -> dict:
-    """Provide basic fallback response when AI is not available"""
+    """Provide intelligent fallback response when AI is not available"""
     lower_message = user_message.lower()
 
+    # Tacos
     if 'tacos' in lower_message or 'taco' in lower_message:
         return {
             "response": "🌮 **Tacos Saludables**\n\nLos tacos pueden ser una excelente opción nutritiva si se preparan adecuadamente:\n\n• **Tortilla**: Prefiere tortillas de maíz integral (1 equivalente de cereal SMAE)\n• **Proteína**: Pollo, pescado o frijoles (1 equivalente de carne o leguminosa)\n• **Verduras**: Agrega lechuga, tomate, cebolla y cilantro (libre)\n• **Grasas**: Limita el aguacate a 1/4 de pieza (1 equivalente de grasa)\n\nUn taco bien balanceado aporta aproximadamente 150-200 kcal. Para mantener una comida equilibrada, considera 2-3 tacos con ensalada.\n\n¿Te gustaría saber sobre alguna preparación específica de tacos?",
             "tags": ['tradicional_mexicano', 'recetas', 'control_peso']
         }
 
+    # Frijoles
     if 'frijol' in lower_message or 'frijoles' in lower_message:
         return {
             "response": "🫘 **Frijoles - Superalimento Mexicano**\n\nLos frijoles son uno de los alimentos más nutritivos de la dieta mexicana:\n\n**Beneficios nutricionales:**\n• Alto contenido de proteína vegetal (8g por media taza)\n• Rica fuente de fibra (7g por media taza)\n• Bajo índice glucémico\n• Vitaminas del complejo B y minerales (hierro, magnesio)\n\n**Equivalencia SMAE:** Media taza de frijoles cocidos = 1 equivalente de leguminosa\n\n**Recomendación:** Consúmelos de 3-4 veces por semana, de preferencia con cereales integrales para obtener proteína completa.\n\n¿Te gustaría conocer recetas saludables con frijoles?",
             "tags": ['alto_fibra', 'proteína_vegetal', 'tradicional_mexicano']
         }
+    
+    # Aguacate
+    if 'aguacate' in lower_message or 'aguacates' in lower_message or 'avocado' in lower_message:
+        return {
+            "response": "🥑 **Aguacate - Grasa Saludable**\n\nEl aguacate es un alimento nutritivo rico en grasas monoinsaturadas:\n\n**Beneficios:**\n• Grasas saludables para el corazón\n• Vitamina E y antioxidantes\n• Ayuda a absorber vitaminas liposolubles\n• Rico en potasio\n\n**Equivalencia SMAE:** 1/3 de aguacate = 1 equivalente de grasa (~45 kcal)\n\n**Recomendación:** Consume con moderación. Aunque es saludable, es alto en calorías. Ideal para ensaladas o como topping en tus platillos.",
+            "tags": ['grasa_saludable', 'tradicional_mexicano']
+        }
+    
+    # Diabetes
+    if 'diabetes' in lower_message or 'diabético' in lower_message or 'diabetico' in lower_message or 'glucosa' in lower_message or 'azúcar' in lower_message or 'azucar' in lower_message:
+        return {
+            "response": "🩺 **Manejo Nutricional de Diabetes**\n\nPara el control de la diabetes, considera estas recomendaciones:\n\n**Alimentos recomendados:**\n• Cereales integrales de bajo índice glucémico\n• Verduras sin límite (especialmente nopales)\n• Proteínas magras (pescado, pollo, leguminosas)\n• Frutas con moderación (preferir frutas enteras vs jugos)\n\n**Equivalencias SMAE útiles:**\n• 1/2 taza de frijoles = 1 equivalente de leguminosa\n• 1 tortilla de maíz = 1 equivalente de cereal\n• 1/4 de plato debe ser proteína, 1/4 cereales, 1/2 verduras\n\n**Importante:** Mantén horarios regulares de comida y controla porciones. Consulta con tu médico para un plan personalizado.",
+            "tags": ['diabetes', 'control_glucosa'] 
+        }
+    
+    # Peso / Adelgazar
+    if any(word in lower_message for word in ['peso', 'adelgazar', 'bajar', 'perder', 'dieta', 'calorías', 'calorias']):
+        return {
+            "response": "⚖️ **Control de Peso Saludable**\n\nPara lograr tus metas de peso de forma saludable:\n\n**Principios básicos:**\n• Déficit calórico moderado (300-500 kcal/día)\n• Comidas balanceadas usando el Plato del Bien Comer\n• Prioriza proteína magra y fibra para saciedad\n• Hidrátate bien (2-3 litros de agua al día)\n\n**Tips prácticos:**\n• Controla porciones con el método del plato\n• Prefiere tacos de pollo/pescado vs carne roja\n• Sustituye refrescos por agua de jamaica sin azúcar\n• Incluye verduras en cada comida\n\n**SMAE te ayuda** a planear porciones correctas. ¿Te gustaría ejemplos de menús para control de peso?",
+            "tags": ['control_peso', 'déficit_calórico']
+        }
+    
+    # Recetas
+    if any(word in lower_message for word in ['receta', 'recetas', 'preparar', 'cocinar', 'platillo', 'comida']):
+        return {
+            "response": "🍽️ **Recetas Saludables Mexicanas**\n\nPuedo ayudarte con recetas nutritivas de platillos tradicionales:\n\n**Opciones saludables:**\n• **Tacos de pescado a la plancha**: Alto en proteína, bajo en grasa\n• **Caldo de po llo con verduras**: Nutritivo y reconfortante\n• **Ensalada de nopales**: Rica en fibra, ideal para diabetes\n• **Chilaquiles verdes horneados**: Versión más ligera del clásico\n• **Frijoles de la olla**: Proteína vegetal sin grasa añadida\n\n¿Sobre qué platillo específico te gustaría conocer la versión saludable?",
+            "tags": ['recetas', 'tradicional_mexicano']
+        }
+    
+    # SMAE / Equivalencias
+    if any(word in lower_message for word in ['smae', 'equivalente', 'equivalencia', 'porción', 'porcion', 'ración', 'racion']):
+        return {
+            "response": "📊 **Sistema Mexicano de Alimentos Equivalentes (SMAE)**\n\nEl SMAE agrupa alimentos con valor nutricional similar:\n\n**Grupos principales:**\n1. **Cereales**: Tortilla, pan, arroz (70 kcal/equivalente)\n2. **Leguminosas**: Frijoles, lentejas (120 kcal/equivalente)\n3. **Carnes**: Pollo, pescado, res (55-75 kcal/equivalente)\n4. **Frutas**: Manzana, naranja, papaya (60 kcal/equivalente)\n5. **Verduras**: Sin límite en la mayoría\n6. **Grasas**: Aceite, aguacate, nueces (45 kcal/equivalente)\n7. **Lácteos**: Leche, yogurt, queso (variable)\n\n¿Sobre qué grupo específico necesitas información?",
+            "tags": ['smae', 'equivalencias']
+        }
+    
+    # Etiquetas / NOM-051
+    if any(word in lower_message for word in ['etiqueta', 'nom-051', 'nom051', 'sello', 'sellos', 'advertencia']):
+        return {
+            "response": "🏷️ **Etiquetado NOM-051**\n\nLa NOM-051 incluye sellos de advertencia cuando un producto EXCEDE:\n\n**Sellos octagonales:**\n• **Exceso calorías**: \u003e275 kcal/100g\n• **Exceso azúcares**: \u003e10% de energía de azúcares añadidos\n• **Exceso grasas saturadas**: \u003e10% de energía\n• **Exceso grasas trans**: \u003e1% de energía\n• **Exceso sodio**: \u003e300mg/100g o 100ml\n\n**Leyendas:**\n• \"Contiene cafeína - evitar en niños\"\n• \"Contiene edulcorantes - no recomendable en niños\"\n\n**Recomendación:** Evita productos con 2 o más sellos. Prefiere alimentos frescos sin etiqueta.",
+            "tags": ['etiquetado', 'nom-051']
+        }
+    
+    # Nopales
+    if 'nopal' in lower_message:
+        return {
+            "response": "🌵 **Nopales - Tesoro Nutricional Mexicano**\n\nLos nopales son extraordinariamente nutritivos:\n\n**Beneficios:**\n• Solo 14 kcal por taza\n• Alto contenido de fibra soluble (ayuda a controlar glucosa)\n• Rico en calcio y vitamina C\n• Ayuda a reducir colesterol\n• Efecto saciante\n\n**Usos culinarios:**\n• Ensaladas de nopales\n• Tacos de nopales asados\n• Jugo verde con nopal\n• Guisados con carne o huevo\n\n**SMAE:** Los nopales se consideran verdura libre (consume sin límite).\n\nIdeal para diabetes, control de peso y salud cardiovascular.",
+            "tags": ['nopales', 'alto_fibra', 'tradicional_mexicano']
+        }
+    
+    # Chía / Amaranto
+    if any(word in lower_message for word in ['chia', 'chía', 'amaranto']):
+        return {
+            "response": "🌾 **Superalimentos Mexicanos: Chía y Amaranto**\n\n**CHÍA:**\n• Omega-3 vegetal\n• Alta fibra (11g/onza)\n• 1 cucharada en agua = gelifica y da saciedad\n• SMAE: 1 cucharada = 1 equivalente de grasa\n\n**AMARANTO:**\n• Proteína completa (lisina)\n• Sin gluten\n• Rico en calcio y hierro\n• 1/2 taza cocida = 1 equivalente de cereal\n\n**Usos:**\n• Chía: Aguas frescas, yogurt, ensaladas\n• Amaranto: Alegrías, cereal, panqué\n\nAmbos son excelentes para nutrición vegetariana y deportiva.",
+            "tags": ['superalimentos', 'tradicional_mexicano', 'omega3']
+        }
+    
+    # Saludo / Hola
+    if any(word in lower_message for word in ['hola', 'buenos', 'buenas', 'saludos', 'hey', 'hi']):
+        return {
+            "response": "👋 ¡Hola! Soy tu Nutriólogo Virtual especializado en nutrición mexicana.\n\nPuedo ayudarte con:\n\n• 🌮 Análisis nutricional de platillos mexicanos\n• 📊 Equivalencias del Sistema SMAE\n• 🏷️ Interpretación de etiquetas NOM-051\n• 🍽️ Recetas saludables tradicionales\n• ⚖️ Control de peso y hábitos saludables\n• 🩺 Manejo nutricional de diabetes e hipertensión\n\n¿En qué puedo asesorarte el día de hoy?",
+            "tags": ['saludo', 'consulta_general']
+        }
 
-    # Generic response
+    # Generic response (solo si no coincide con ninguno anterior)
     return {
         "response": "🩺 **Consulta Nutricional**\n\nEstoy aquí para ayudarte con tus dudas sobre nutrición. Puedo ayudarte con:\n\n• **Análisis de alimentos mexicanos** y sus valores nutricionales\n• **Equivalencias SMAE** para planificar comidas balanceadas\n• **Interpretación de etiquetas** y sellos NOM-051\n• **Recetas saludables** con ingredientes mexicanos\n• **Control de peso** y hábitos saludables\n• **Manejo nutricional** de diabetes e hipertensión\n\nPara brindarte la mejor asesoría, por favor cuéntame más específicamente sobre tu consulta o inquietud nutricional.",
         "tags": ['consulta_general']
