@@ -3,7 +3,8 @@ AI Nutritionist Chat API Router
 Provides conversational AI nutritionist support using Gemini/Claude
 """
 from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse  
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import logging
@@ -13,7 +14,7 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 from sqlmodel import Session, select
 
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_token
 from domain.auth.models import AuthUser
 from domain.patients.models import Patient, MedicalHistory, AnthropometricRecord
 from domain.medicinal_plants.models import MedicinalPlant
@@ -22,6 +23,50 @@ from core.database import get_async_session
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+# Configure AI models
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+AI_VISION_MODEL = os.getenv("AI_VISION_MODEL", "gemini")
+
+# Initialize Gemini
+gemini_model = None
+if GOOGLE_API_KEY and GOOGLE_API_KEY != "your-google-gemini-api-key-here":
+    genai.configure(api_key=GOOGLE_API_KEY)
+    gemini_model = genai.GenerativeModel('gemini-1.5-pro-latest')
+
+# Initialize Claude
+anthropic_client = None
+if ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != "your-anthropic-api-key-here":
+    anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
+
+# Optional security scheme
+security_optional = HTTPBearer(auto_error=False)
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
+    session: Session = Depends(get_async_session)
+) -> Optional[AuthUser]:
+    """Get current user if authenticated, None otherwise"""
+    if not credentials:
+        return None
+    
+    try:
+        payload = verify_token(credentials.credentials)
+        user_id: int = payload.get("user_id")
+        
+        if user_id is None:
+            return None
+        
+        statement = select(AuthUser).where(AuthUser.id == user_id)
+        result = await session.exec(statement)
+        user = result.first()
+        
+        return user if user and user.is_active else None
+    except Exception:
+        return None
 
 router = APIRouter()
 
@@ -531,14 +576,17 @@ def get_fallback_response(user_message: str, user_context: Dict[str, Any] = None
 @router.post("/chat", response_model=ChatResponse)
 async def nutritionist_chat(
     request: ChatRequest,
-    current_user: AuthUser = Depends(get_current_user),
-    session: Session = Depends(get_async_session)
+    session: Session = Depends(get_async_session),
+    current_user: Optional[AuthUser] = Depends(get_current_user_optional)
 ):
     """
     Chat with AI Nutritionist
 
     Send a message and get expert nutritional advice focused on Mexican cuisine
     and SMAE (Sistema Mexicano de Alimentos Equivalentes).
+
+    Works for both authenticated and anonymous users. Authenticated users get
+    personalized responses based on their profile, goals, and medical history.
 
     **Topics covered:**
     - Mexican food analysis
@@ -547,13 +595,17 @@ async def nutritionist_chat(
     - Healthy Mexican recipes
     - Weight management
     - Diabetes and hypertension nutrition
+    - Medicinal plants knowledge
     - Meal planning
     """
     try:
-        logger.info(f"Processing nutritionist chat request from user {current_user.id}: {request.message[:50]}...")
-        
-        # Fetch user context for personalization
-        user_context = await get_user_context(current_user, session)
+        # Get user context if authenticated
+        user_context = None
+        if current_user:
+            logger.info(f"Processing chat from authenticated user {current_user.id}: {request.message[:50]}...")
+            user_context = await get_user_context(current_user, session)
+        else:
+            logger.info(f"Processing chat from anonymous user: {request.message[:50]}...")
         
         result = await generate_chat_response(
             user_message=request.message,
