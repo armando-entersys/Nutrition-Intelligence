@@ -1,3 +1,4 @@
+```
 import React, { useState, useRef } from 'react';
 import {
   Box,
@@ -22,6 +23,10 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   CameraAlt as CameraIcon,
@@ -40,6 +45,7 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { scanBarcode, scanLabel, formatProductData } from '../../services/scannerService';
+import { Scanner } from 'react-qr-barcode-scanner';
 
 const MotionPaper = motion(Paper);
 const MotionCard = motion(Card);
@@ -63,6 +69,7 @@ const EscanerNOM051 = () => {
   const [error, setError] = useState(null);
   const [barcode, setBarcode] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
   const fileInputRef = useRef(null);
 
   const sellosInfo = {
@@ -207,6 +214,23 @@ const EscanerNOM051 = () => {
     setBarcode('');
     setSelectedFile(null);
     setError(null);
+  };
+
+  const handleCameraDetect = (result) => {
+    if (result) {
+      const detectedCode = result.rawValue || result.data || result.text || result;
+      if (detectedCode && detectedCode.length >= 8) {
+        setBarcode(detectedCode);
+        setShowCameraScanner(false);
+        setError(null);
+      }
+    }
+  };
+
+  const handleCameraError = (error) => {
+    console.error('Camera error:', error);
+    setError('Error al acceder a la cámara. Verifica los permisos.');
+    setShowCameraScanner(false);
   };
 
   const renderSello = (sello) => {
@@ -397,6 +421,18 @@ const EscanerNOM051 = () => {
                     }
                   }}
                   sx={{ mb: 2 }}
+                  InputProps={{
+                    endAdornment: (
+                      <IconButton
+                        onClick={() => setShowCameraScanner(true)}
+                        disabled={scanning}
+                        color="primary"
+                        title="Escanear con cámara"
+                      >
+                        <CameraIcon />
+                      </IconButton>
+                    ),
+                  }}
                 />
                 <Button
                   fullWidth
@@ -425,6 +461,12 @@ const EscanerNOM051 = () => {
                   Si no encuentra el producto, prueba el modo de escaneo por foto.
                 </Typography>
               </Alert>
+
+              <Alert severity="success" icon={<CameraIcon />} sx={{ mt: 2 }}>
+                <Typography variant="body2">
+                  <strong>Tip:</strong> Click en el ícono de cámara 📷 dentro del campo para escanear con tu dispositivo.
+                </Typography>
+              </Alert>
             </Box>
           )}
 
@@ -451,7 +493,7 @@ const EscanerNOM051 = () => {
                     width: '100%',
                     height: 250,
                     background: selectedFile
-                      ? `url(${URL.createObjectURL(selectedFile)}) center/cover`
+                      ? `url(${ URL.createObjectURL(selectedFile) }) center / cover`
                       : 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
                     borderRadius: 3,
                     display: 'flex',
@@ -556,7 +598,7 @@ const EscanerNOM051 = () => {
             {/* Header con producto */}
             <Box
               sx={{
-                background: `linear-gradient(135deg, ${getHealthScoreColor(scannedProduct.health_score)} 0%, ${getHealthScoreColor(scannedProduct.health_score)}dd 100%)`,
+                background: `linear - gradient(135deg, ${ getHealthScoreColor(scannedProduct.health_score)} 0 %, ${ getHealthScoreColor(scannedProduct.health_score) }dd 100 %)`,
                 color: 'white',
                 p: 3,
                 display: 'flex',
@@ -611,7 +653,7 @@ const EscanerNOM051 = () => {
                   {scannedProduct.scan_count > 1 && (
                     <Chip
                       icon={<PeopleIcon />}
-                      label={`Escaneado ${scannedProduct.scan_count} veces`}
+                      label={`Escaneado ${ scannedProduct.scan_count } veces`}
                       size="small"
                       sx={{
                         bgcolor: 'rgba(255,255,255,0.25)',
@@ -656,7 +698,7 @@ const EscanerNOM051 = () => {
                   {scannedProduct.confidence_score && scannedProduct.fuente === 'ai_vision' && (
                     <Chip
                       icon={<AutoAwesomeIcon />}
-                      label={`IA: ${Math.round(scannedProduct.confidence_score)}% confianza`}
+                      label={`IA: ${ Math.round(scannedProduct.confidence_score) }% confianza`}
                       size="small"
                       sx={{
                         bgcolor: 'rgba(156, 39, 176, 0.9)',
@@ -797,7 +839,7 @@ const EscanerNOM051 = () => {
                     <ListItem>
                       <ListItemText
                         primary="Calorías"
-                        secondary={`${scannedProduct.informacion_nutricional.calorias} kcal`}
+                        secondary={`${ scannedProduct.informacion_nutricional.calorias } kcal`}
                       />
                       {scannedProduct.sellos_advertencia.find(
                         (s) => s.tipo === 'exceso_calorias' && s.activo
@@ -807,21 +849,21 @@ const EscanerNOM051 = () => {
                     <ListItem>
                       <ListItemText
                         primary="Proteínas"
-                        secondary={`${scannedProduct.informacion_nutricional.proteinas_g}g`}
+                        secondary={`${ scannedProduct.informacion_nutricional.proteinas_g } g`}
                       />
                     </ListItem>
                     <Divider />
                     <ListItem>
                       <ListItemText
                         primary="Carbohidratos"
-                        secondary={`${scannedProduct.informacion_nutricional.carbohidratos_g}g`}
+                        secondary={`${ scannedProduct.informacion_nutricional.carbohidratos_g } g`}
                       />
                     </ListItem>
                     <Divider />
                     <ListItem>
                       <ListItemText
                         primary="Azúcares"
-                        secondary={`${scannedProduct.informacion_nutricional.azucares_g}g`}
+                        secondary={`${ scannedProduct.informacion_nutricional.azucares_g } g`}
                       />
                       {scannedProduct.sellos_advertencia.find(
                         (s) => s.tipo === 'exceso_azucares' && s.activo
@@ -831,7 +873,7 @@ const EscanerNOM051 = () => {
                     <ListItem>
                       <ListItemText
                         primary="Grasas Saturadas"
-                        secondary={`${scannedProduct.informacion_nutricional.grasas_saturadas_g}g`}
+                        secondary={`${ scannedProduct.informacion_nutricional.grasas_saturadas_g } g`}
                       />
                       {scannedProduct.sellos_advertencia.find(
                         (s) => s.tipo === 'exceso_grasas_saturadas' && s.activo
@@ -841,7 +883,7 @@ const EscanerNOM051 = () => {
                     <ListItem>
                       <ListItemText
                         primary="Grasas Trans"
-                        secondary={`${scannedProduct.informacion_nutricional.grasas_trans_g}g`}
+                        secondary={`${ scannedProduct.informacion_nutricional.grasas_trans_g } g`}
                       />
                       {scannedProduct.sellos_advertencia.find(
                         (s) => s.tipo === 'exceso_grasas_trans' && s.activo
@@ -851,14 +893,14 @@ const EscanerNOM051 = () => {
                     <ListItem>
                       <ListItemText
                         primary="Fibra"
-                        secondary={`${scannedProduct.informacion_nutricional.fibra_g}g`}
+                        secondary={`${ scannedProduct.informacion_nutricional.fibra_g } g`}
                       />
                     </ListItem>
                     <Divider />
                     <ListItem>
                       <ListItemText
                         primary="Sodio"
-                        secondary={`${scannedProduct.informacion_nutricional.sodio_mg}mg`}
+                        secondary={`${ scannedProduct.informacion_nutricional.sodio_mg } mg`}
                       />
                       {scannedProduct.sellos_advertencia.find(
                         (s) => s.tipo === 'exceso_sodio' && s.activo
@@ -956,6 +998,65 @@ const EscanerNOM051 = () => {
           </Grid>
         </MotionPaper>
       )}
+
+      {/* Camera Scanner Modal */}
+      <Dialog 
+        open={showCameraScanner} 
+        onClose={() => setShowCameraScanner(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CameraIcon />
+            <Typography variant="h6">Escanear Código de Barras</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ 
+            width: '100%', 
+            height: 400,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: '#000',
+            borderRadius: 2,
+            overflow: 'hidden',
+            position: 'relative'
+          }}>
+            <Scanner
+              onScan={handleCameraDetect}
+              onError={handleCameraError}
+              constraints={{
+                audio: false,
+                video: { facingMode: 'environment' }
+              }}
+              style={{ width: '100%', height: '100%' }}
+            />
+            <Box sx={{
+              position: 'absolute',
+              bottom: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              bgcolor: 'rgba(0,0,0,0.7)',
+              color: 'white',
+              px: 2,
+              py: 1,
+              borderRadius: 2
+            }}>
+              <Typography variant="body2">
+                Apunta la cámara al código de barras
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCameraScanner(false)} color="primary">
+            Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
