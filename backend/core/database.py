@@ -82,6 +82,8 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session
 
+get_db = get_async_session
+
 @asynccontextmanager
 async def get_db_transaction():
     """Get database session with transaction management"""
