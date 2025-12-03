@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from contextlib import asynccontextmanager
 import logging
@@ -53,10 +54,35 @@ def create_application() -> FastAPI:
         description="Plataforma integral de nutrición inteligente para profesionales y pacientes",
         version="1.0.0",
         docs_url="/docs",
-        redoc_url="/redoc",
+        redoc_url=None,  # Custom ReDoc endpoint below
         openapi_url="/openapi.json",
         lifespan=lifespan
     )
+
+    # Custom ReDoc endpoint with updated CDN and proper CSP compatibility
+    @app.get("/redoc", include_in_schema=False)
+    async def custom_redoc_html():
+        return HTMLResponse(
+            """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nutrition Intelligence API - Documentation</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <redoc spec-url='/openapi.json'></redoc>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+</body>
+</html>
+            """,
+            media_type="text/html"
+        )
     
     # Security middleware
     app.add_middleware(
