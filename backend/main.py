@@ -20,7 +20,8 @@ from middleware.error_handler import (
     validation_exception_handler,
     general_exception_handler
 )
-from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat, scanner, rag, medicinal_plants, admin_medicinal_plants, logs, trophology
+from middleware.security_headers import SecurityHeadersMiddleware, RateLimitByIPMiddleware
+from api.routers import auth_simple, users, foods, recipes, meal_plans, nutritionists, patients, nutrition_calculator, weekly_planning, vision, laboratory, whatsapp, admin, notifications, patient_progress, nutritionist_chat, scanner, rag, medicinal_plants, admin_medicinal_plants, logs, trophology, fasting, gamification, digestion, mindfulness
 from api.routers import auth_new, auth_complete
 
 logger = logging.getLogger(__name__)
@@ -51,17 +52,24 @@ def create_application() -> FastAPI:
         title="Nutrition Intelligence API",
         description="Plataforma integral de nutrición inteligente para profesionales y pacientes",
         version="1.0.0",
-        docs_url="/docs" if settings.environment == "development" else None,
-        redoc_url="/redoc" if settings.environment == "development" else None,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
         lifespan=lifespan
     )
     
     # Security middleware
     app.add_middleware(
-        TrustedHostMiddleware, 
+        TrustedHostMiddleware,
         allowed_hosts=settings.allowed_hosts
     )
-    
+
+    # Security headers middleware
+    app.add_middleware(SecurityHeadersMiddleware, environment=settings.environment)
+
+    # Rate limiting for documentation endpoints
+    app.add_middleware(RateLimitByIPMiddleware, requests_per_minute=60)
+
     # Logging middleware (PRIMERO para capturar todo)
     app.add_middleware(LoggingMiddleware)
     
@@ -171,6 +179,18 @@ def create_application() -> FastAPI:
 
     # Trophology router - Lezaeta's food combination rules
     app.include_router(trophology.router, prefix="/api/v1/trophology", tags=["trophology"])
+
+    # Fasting router
+    app.include_router(fasting.router, prefix="/api/v1/fasting", tags=["fasting"])
+
+    # Gamification router
+    app.include_router(gamification.router, prefix="/api/v1/gamification", tags=["gamification"])
+
+    # Digestion router
+    app.include_router(digestion.router, prefix="/api/v1/digestion", tags=["digestion"])
+
+    # Mindfulness router
+    app.include_router(mindfulness.router, prefix="/api/v1/mindfulness", tags=["mindfulness"])
 
     return app
 
