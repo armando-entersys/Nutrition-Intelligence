@@ -12,8 +12,7 @@ import re
 
 from core.database import get_session
 from core.auth import create_access_token, create_refresh_token
-from domain.auth.models import AuthUser, UserRole, AccountStatus
-from domain.auth.password_reset import PasswordResetToken, TokenStatus
+from domain.auth.models import AuthUser, UserRole, AccountStatus, PasswordResetToken, TokenStatus
 from core.logging import log_success, log_error
 from services.email_service import email_service
 
