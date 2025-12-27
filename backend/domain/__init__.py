@@ -24,6 +24,10 @@ from .recipes.models import (
 # Import trophology models
 from .trophology.models import FoodCategory as TrophologyFoodCategory, FoodCompatibility
 
+# Force SQLAlchemy to configure all mappers after all models are imported
+from sqlalchemy.orm import configure_mappers
+configure_mappers()
+
 __all__ = [
     # Fasting (must be first due to User relationships)
     "FastingWindow", "FastingLog",
