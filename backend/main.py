@@ -16,6 +16,9 @@ from core.config import get_settings
 from core.database import init_db
 from core.logging import LoggingMiddleware, log_success, log_error
 from core.sentry import init_sentry
+
+# Import all domain models to ensure SQLAlchemy mappers are configured
+import domain  # noqa: F401
 from middleware.error_handler import (
     http_exception_handler,
     validation_exception_handler,
