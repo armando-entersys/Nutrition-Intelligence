@@ -50,4 +50,4 @@ class DigestionLog(SQLModel, table=True):
     updated_at: Optional[datetime] = Field(default=None)
     
     # Relationships
-    user: Optional["User"] = Relationship(back_populates="digestion_logs")
+    # user: Optional["User"] = Relationship(back_populates="digestion_logs")  # Disabled - mapper conflict

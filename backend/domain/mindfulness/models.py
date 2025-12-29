@@ -37,7 +37,7 @@ class HungerLog(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
-    user: Optional["User"] = Relationship(back_populates="hunger_logs")
+    # user: Optional["User"] = Relationship(back_populates="hunger_logs")  # Disabled - mapper conflict
 
 class STOPPractice(SQLModel, table=True):
     """
@@ -61,4 +61,4 @@ class STOPPractice(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
-    user: Optional["User"] = Relationship(back_populates="stop_practices")
+    # user: Optional["User"] = Relationship(back_populates="stop_practices")  # Disabled - mapper conflict

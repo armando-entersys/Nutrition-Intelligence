@@ -32,7 +32,7 @@ class UserGamificationProfile(SQLModel, table=True):
     max_streak: int = Field(default=0)
     last_activity_date: Optional[datetime] = Field(default=None)
     
-    user: Optional["User"] = Relationship(back_populates="gamification_profile")
+    # user: Optional["User"] = Relationship(back_populates="gamification_profile")  # Disabled - mapper conflict
 
 class UserBadge(SQLModel, table=True):
     __tablename__ = "user_badges"
@@ -44,4 +44,4 @@ class UserBadge(SQLModel, table=True):
     earned_at: datetime = Field(default_factory=datetime.utcnow)
     
     badge: Badge = Relationship(back_populates="user_badges")
-    user: Optional["User"] = Relationship(back_populates="badges")
+    # user: Optional["User"] = Relationship(back_populates="badges")  # Disabled - mapper conflict

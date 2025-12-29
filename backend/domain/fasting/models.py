@@ -37,7 +37,7 @@ class FastingWindow(SQLModel, table=True):
     updated_at: Optional[datetime] = Field(default=None)
 
     # Relationships
-    user: Optional["User"] = Relationship(back_populates="fasting_window")
+    # user: Optional["User"] = Relationship(back_populates="fasting_window")  # Disabled - mapper conflict
     logs: List["FastingLog"] = Relationship(back_populates="window")
 
 
@@ -88,7 +88,7 @@ class FastingLog(SQLModel, table=True):
     updated_at: Optional[datetime] = Field(default=None)
 
     # Relationships
-    user: Optional["User"] = Relationship(back_populates="fasting_logs")
+    # user: Optional["User"] = Relationship(back_populates="fasting_logs")  # Disabled - mapper conflict
     window: FastingWindow = Relationship(back_populates="logs")
 
 
