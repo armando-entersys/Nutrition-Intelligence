@@ -49,6 +49,16 @@ class User(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[Patient.user_id]"}
     )
     audit_logs: List["AuditLog"] = Relationship(back_populates="actor")
+
+    # Note: Fasting, Digestion, Mindfulness, Gamification relationships temporarily disabled
+    # These models use a different SQLModel registry causing mapper conflicts
+    # TODO: Fix model registry to enable these relationships
+    # fasting_window: Optional["FastingWindow"] = Relationship(back_populates="user")
+    # fasting_logs: List["FastingLog"] = Relationship(back_populates="user")
+    # digestion_logs: List["DigestionLog"] = Relationship(back_populates="user")
+    # hunger_logs: List["HungerLog"] = Relationship(back_populates="user")
+    # stop_practices: List["STOPPractice"] = Relationship(back_populates="user")
+    # gamification_profile: Optional["UserGamificationProfile"] = Relationship(back_populates="user")
     
     @property
     def full_name(self) -> str:
