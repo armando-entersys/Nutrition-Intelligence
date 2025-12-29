@@ -493,7 +493,7 @@ const EscanerNOM051 = () => {
                     width: '100%',
                     height: 250,
                     background: selectedFile
-                      ? `url(${ URL.createObjectURL(selectedFile) }) center / cover`
+                      ? `url(${URL.createObjectURL(selectedFile)}) center / cover`
                       : 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
                     borderRadius: 3,
                     display: 'flex',
