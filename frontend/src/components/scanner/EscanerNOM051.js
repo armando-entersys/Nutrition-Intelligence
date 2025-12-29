@@ -44,7 +44,7 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { scanBarcode, scanLabel, formatProductData } from '../../services/scannerService';
-import { Scanner } from 'react-qr-barcode-scanner';
+import BarcodeScanner from 'react-qr-barcode-scanner';
 
 const MotionPaper = motion(Paper);
 const MotionCard = motion(Card);
@@ -1024,13 +1024,12 @@ const EscanerNOM051 = () => {
             overflow: 'hidden',
             position: 'relative'
           }}>
-            <Scanner
-              onScan={handleCameraDetect}
-              onError={handleCameraError}
-              constraints={{
-                audio: false,
-                video: { facingMode: 'environment' }
+            <BarcodeScanner
+              onUpdate={(err, result) => {
+                if (result) handleCameraDetect(result);
+                if (err) handleCameraError(err);
               }}
+              facingMode="environment"
               style={{ width: '100%', height: '100%' }}
             />
             <Box sx={{
