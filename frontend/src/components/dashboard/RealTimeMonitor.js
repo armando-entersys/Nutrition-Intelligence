@@ -32,8 +32,8 @@ const RealTimeMonitor = () => {
         setNutritionMetrics({
           equivalenceGroups: equivalencesResponse.data.length,
           activityLevels: activityResponse.data.length,
-          calculationsToday: Math.floor(Math.random() * 50) + 10,
-          plansCreated: Math.floor(Math.random() * 20) + 5
+          calculationsToday: 0,
+          plansCreated: 0
         });
 
         setIsLoading(false);
@@ -52,33 +52,10 @@ const RealTimeMonitor = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Simular logs recientes (en una implementación real, esto vendría del backend)
+  // Los logs reales vendrían del backend - por ahora mostramos vacío
   useEffect(() => {
-    const simulateLogs = () => {
-      const logTypes = ['success', 'info', 'warning'];
-      const actions = [
-        'Cálculo TMB realizado',
-        'Plan nutricional generado', 
-        'Equivalencias consultadas',
-        'TDEE calculado',
-        'Macronutrientes distribuidos'
-      ];
-      
-      const newLogs = Array.from({ length: 5 }, (_, index) => ({
-        id: Date.now() + index,
-        timestamp: new Date(Date.now() - index * 60000).toLocaleTimeString(),
-        type: logTypes[Math.floor(Math.random() * logTypes.length)],
-        message: actions[Math.floor(Math.random() * actions.length)],
-        endpoint: '/api/v1/nutrition-calculator/*'
-      }));
-      
-      setRecentLogs(newLogs);
-    };
-
-    simulateLogs();
-    const logInterval = setInterval(simulateLogs, 10000);
-    
-    return () => clearInterval(logInterval);
+    // No hay actividad simulada - solo datos reales del backend
+    setRecentLogs([]);
   }, []);
 
   const getStatusColor = (status) => {
@@ -177,22 +154,28 @@ const RealTimeMonitor = () => {
       <div style={styles.logContainer}>
         <h3 style={styles.logTitle}>📝 Actividad Reciente</h3>
         <div style={styles.logList}>
-          {recentLogs.map(log => (
-            <div key={log.id} style={styles.logItem}>
-              <span 
-                style={{
-                  ...styles.logDot, 
-                  backgroundColor: getLogTypeColor(log.type)
-                }}
-              />
-              <div style={styles.logContent}>
-                <div style={styles.logMessage}>{log.message}</div>
-                <div style={styles.logMeta}>
-                  {log.timestamp} • {log.endpoint}
+          {recentLogs.length === 0 ? (
+            <div style={styles.emptyState}>
+              No hay actividad reciente
+            </div>
+          ) : (
+            recentLogs.map(log => (
+              <div key={log.id} style={styles.logItem}>
+                <span
+                  style={{
+                    ...styles.logDot,
+                    backgroundColor: getLogTypeColor(log.type)
+                  }}
+                />
+                <div style={styles.logContent}>
+                  <div style={styles.logMessage}>{log.message}</div>
+                  <div style={styles.logMeta}>
+                    {log.timestamp} • {log.endpoint}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -362,6 +345,12 @@ const styles = {
   logMeta: {
     fontSize: '12px',
     color: '#7f8c8d',
+  },
+  emptyState: {
+    textAlign: 'center',
+    color: '#95a5a6',
+    padding: '20px',
+    fontSize: '14px',
   },
   adminSection: {
     backgroundColor: 'white',
