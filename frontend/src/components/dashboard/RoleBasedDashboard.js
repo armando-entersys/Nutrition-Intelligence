@@ -158,25 +158,25 @@ const AdminDashboard = ({ data, onNavigate }) => (
       <div style={styles.metricsGrid}>
         <MetricCard
           title="Total Usuarios"
-          value={data.totalUsers || 234}
+          value={data.totalUsers ?? 0}
           icon="👥"
           color="#3498db"
         />
         <MetricCard
           title="Nutricionistas Activos"
-          value={data.activeNutritionists || 45}
+          value={data.activeNutritionists ?? 0}
           icon="🥗"
           color="#27ae60"
         />
         <MetricCard
           title="Pacientes Registrados"
-          value={data.totalPatients || 189}
+          value={data.totalPatients ?? 0}
           icon="👤"
           color="#e74c3c"
         />
         <MetricCard
           title="Salud del Sistema"
-          value={data.systemHealth || "Óptimo"}
+          value={data.systemHealth || "Verificando..."}
           icon="⚡"
           color="#f39c12"
         />
@@ -245,25 +245,25 @@ const AdminDashboard = ({ data, onNavigate }) => (
       <div style={styles.metricsGrid}>
         <MetricCard
           title="Cálculos Este Mes"
-          value={data.monthlyCalculations || 1250}
+          value={data.monthlyCalculations ?? 0}
           icon="🧮"
           color="#9b59b6"
         />
         <MetricCard
           title="Planes Generados"
-          value={data.monthlyPlans || 456}
+          value={data.monthlyPlans ?? 0}
           icon="📋"
           color="#1abc9c"
         />
         <MetricCard
           title="Consultas IA"
-          value={data.aiQueries || 3241}
+          value={data.aiQueries ?? 0}
           icon="🤖"
           color="#f39c12"
         />
         <MetricCard
           title="Logins Hoy"
-          value={data.dailyLogins || 67}
+          value={data.dailyLogins ?? 0}
           icon="🚪"
           color="#3498db"
         />
@@ -290,25 +290,25 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
       <div style={styles.metricsRow}>
         <MetricCard
           title="Citas Hoy"
-          value={data.todayAppointments || 3}
+          value={data.todayAppointments ?? 0}
           icon="👥"
           color="#3498db"
         />
         <MetricCard
           title="Recordatorios 24h Pendientes"
-          value={data.pending24hRecalls || 5}
+          value={data.pending24hRecalls ?? 0}
           icon="📝"
           color="#e74c3c"
         />
         <MetricCard
           title="Fotos por Analizar"
-          value={data.pendingPhotoAnalysis || 8}
+          value={data.pendingPhotoAnalysis ?? 0}
           icon="📸"
           color="#f39c12"
         />
         <MetricCard
           title="Mensajes de Pacientes"
-          value={data.unreadMessages || 12}
+          value={data.unreadMessages ?? 0}
           icon="💬"
           color="#9b59b6"
         />
@@ -319,24 +319,23 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
     <div style={styles.appointmentsSection}>
       <h3>🗓️ Próximas Citas</h3>
       <div style={styles.appointmentsList}>
-        <AppointmentItem
-          time="09:00 AM"
-          patient="María González"
-          type="Seguimiento - Semana 4"
-          status="confirmed"
-        />
-        <AppointmentItem
-          time="10:30 AM"
-          patient="Juan Pérez"
-          type="Primera Consulta"
-          status="pending"
-        />
-        <AppointmentItem
-          time="02:00 PM"
-          patient="Ana Martínez"
-          type="Entrega de Plan"
-          status="confirmed"
-        />
+        {data.appointments && data.appointments.length > 0 ? (
+          data.appointments.slice(0, 3).map((apt, index) => (
+            <AppointmentItem
+              key={apt.id || index}
+              time={apt.time || apt.scheduled_time || '--:--'}
+              patient={apt.patient_name || apt.patient || 'Sin nombre'}
+              type={apt.type || apt.appointment_type || 'Consulta'}
+              status={apt.status || 'pending'}
+            />
+          ))
+        ) : (
+          <div style={styles.emptyState}>
+            <p style={{color: '#7f8c8d', textAlign: 'center', padding: '20px'}}>
+              📅 No hay citas programadas
+            </p>
+          </div>
+        )}
       </div>
       <button
         style={styles.viewAllButton}
@@ -350,27 +349,24 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
     <div style={styles.alertsSection}>
       <h3>⚠️ Requieren Atención</h3>
       <div style={styles.alertsList}>
-        <AlertItem
-          patient="Carlos Ramírez"
-          alert="Adherencia baja (45%) - última semana"
-          priority="high"
-          patientId={2}
-          onNavigate={onNavigate}
-        />
-        <AlertItem
-          patient="Laura Torres"
-          alert="Recordatorio 24h vencido (2 días)"
-          priority="medium"
-          patientId={4}
-          onNavigate={onNavigate}
-        />
-        <AlertItem
-          patient="Pedro Sánchez"
-          alert="Signos vitales fuera de rango"
-          priority="high"
-          patientId={5}
-          onNavigate={onNavigate}
-        />
+        {data.alerts && data.alerts.length > 0 ? (
+          data.alerts.slice(0, 3).map((alert, index) => (
+            <AlertItem
+              key={alert.id || index}
+              patient={alert.patient_name || alert.patient || 'Paciente'}
+              alert={alert.message || alert.alert || alert.description || 'Alerta'}
+              priority={alert.priority || 'medium'}
+              patientId={alert.patient_id || alert.patientId}
+              onNavigate={onNavigate}
+            />
+          ))
+        ) : (
+          <div style={styles.emptyState}>
+            <p style={{color: '#27ae60', textAlign: 'center', padding: '20px'}}>
+              ✅ No hay alertas pendientes
+            </p>
+          </div>
+        )}
       </div>
     </div>
 
@@ -429,25 +425,25 @@ const NutritionistDashboard = ({ data, user, onNavigate }) => (
       <div style={styles.metricsGrid}>
         <MetricCard
           title="Pacientes Activos"
-          value={data.activePatients || 23}
+          value={data.activePatients ?? 0}
           icon="👥"
           color="#3498db"
         />
         <MetricCard
           title="Consultas Realizadas"
-          value={data.monthlyConsultations || 47}
+          value={data.monthlyConsultations ?? 0}
           icon="🗓️"
           color="#27ae60"
         />
         <MetricCard
           title="Planes Nutricionales"
-          value={data.monthlyPlans || 18}
+          value={data.monthlyPlans ?? 0}
           icon="📋"
           color="#e74c3c"
         />
         <MetricCard
           title="Satisfacción Promedio"
-          value={`${data.avgPatientSatisfaction || 4.7}/5`}
+          value={data.avgPatientSatisfaction ? `${data.avgPatientSatisfaction}/5` : 'N/A'}
           icon="⭐"
           color="#f39c12"
         />
